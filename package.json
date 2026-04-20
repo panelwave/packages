@@ -1,0 +1,15 @@
+{
+  "name": "panelwave-packages",
+  "private": true,
+  "description": "PanelWave SDK — TypeScript types and CLI tools",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:types": "npm run build --workspace=packages/types",
+    "build:cli": "npm run build --workspace=packages/cli"
+  },
+  "keywords": [],
+  "license": "MIT"
+}

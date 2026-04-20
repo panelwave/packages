@@ -1,0 +1,40 @@
+{
+  "name": "@panelwave/cli",
+  "version": "1.0.0",
+  "description": "Validate, bundle, diff, and upgrade PanelWave manifests from the command line",
+  "main": "dist/index.js",
+  "bin": {
+    "panelwave": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "panelwave",
+    "cli",
+    "validate",
+    "json-schema",
+    "graphic-novel"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/panelwave/cli"
+  },
+  "dependencies": {
+    "ajv": "^8.17.0",
+    "ajv-formats": "^3.0.0",
+    "chalk": "^4.1.2",
+    "commander": "^12.1.0",
+    "fast-deep-equal": "^3.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.0"
+  }
+}

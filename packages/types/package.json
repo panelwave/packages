@@ -1,0 +1,29 @@
+{
+  "name": "@panelwave/types",
+  "version": "1.0.0",
+  "description": "Full TypeScript interfaces for the PanelWave JSON manifest format",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "panelwave",
+    "types",
+    "typescript",
+    "graphic-novel",
+    "json-schema"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/panelwave/types"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
