@@ -861,6 +861,20 @@ export interface ExtraBlock {
   video?: VideoLayer[];
   shareable?: boolean;
   gated?: boolean;
+  /** Primary media kind of the extra (CMS-authored single-asset extras). */
+  contentType?: 'image' | 'video' | 'audio' | 'pdf' | 'text';
+  /** Direct content URL/path for single-asset extras (alternative to images/audio/video). */
+  url?: string;
+  /** Thumbnail/poster URL/path. */
+  thumbnail?: string;
+  width?: number;
+  height?: number;
+  /** Duration in milliseconds for time-based media. */
+  durationMs?: number;
+  mimeType?: string;
+  downloadable?: boolean;
+  /** Entitlement tier required when {@link gated} is true. */
+  requiredTier?: string;
 }
 
 export interface ExtraCharacterSheet extends ExtraBlock {
