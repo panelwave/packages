@@ -79,7 +79,10 @@ export type OutputFormat =
   | 'a4-landscape'
   | 'us-portrait'
   | 'us-landscape'
-  | 'video-16-9';
+  | 'video-16-9'
+  | 'square'
+  | 'desktop-landscape'
+  | 'tablet-portrait';
 
 // ---------------------------------------------------------------------------
 // Transition
@@ -436,6 +439,8 @@ export interface Edge {
   action?: Mutation[];
   transition?: Transition;
   priority?: number;
+  /** Editor edge metadata/mutation ops (e.g. hotspot/edge-type descriptors). */
+  mutations?: Record<string, unknown>[];
 }
 
 export interface GraphNode {
@@ -541,6 +546,28 @@ export interface LayerCommon {
   dragReveal?: boolean | NormalizedRect;
   transform?: LayerTransform;
   visibleIf?: JsonLogic;
+  /** Human-friendly layer name (authoring aid). */
+  name?: string;
+  /** Flat editor transform (CMS-authored) — alternative to {@link transform}. */
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  scaleX?: number;
+  scaleY?: number;
+  rotation?: number;
+  /** Editor state: layer locked from selection/edits. */
+  locked?: boolean;
+  /** Editor state: layer visibility toggle. */
+  visible?: boolean;
+  /** Editor text-layer content + styling (authoring aids). */
+  content?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  color?: string;
+  align?: string;
+  verticalAlign?: string;
 }
 
 export interface ImageLayer extends LayerCommon {
@@ -582,7 +609,8 @@ export interface TextLayerStyle {
 
 export interface TextLayer extends LayerCommon {
   kind: 'text';
-  text: LocalizedString;
+  /** Localized text. Optional because CMS text layers may instead carry a plain `content` string. */
+  text?: LocalizedString;
   style?: TextLayerStyle;
 }
 
@@ -649,6 +677,20 @@ export interface SpeechBubble {
   shape: BoundingBox;
   balloonConfig?: BalloonConfigOverride;
   visibleIf?: JsonLogic;
+  /** Editor-computed balloon tail geometry (tip/anchor points, width). */
+  tail?: Record<string, unknown>;
+  /** Editor tail style preset (e.g. "normal"). */
+  tailStyle?: string;
+  /** Editor text styling (font, color, alignment, padding). */
+  textStyle?: Record<string, unknown>;
+  /** Editor-computed shape geometry (e.g. ellipse cx/cy/rx/ry). */
+  data?: Record<string, unknown>;
+  /** Editor bubble style (font, colors, stroke). */
+  style?: Record<string, unknown>;
+  /** Editor state: bubble locked from selection/edits. */
+  locked?: boolean;
+  /** Editor state: bubble visibility toggle. */
+  visible?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -809,6 +851,8 @@ export interface PanelVariant {
 
 export interface Panel {
   id?: Identifier;
+  /** Editor placement of the panel within its page layout (normalized x/y/w/h, rotation, grid rows/columns). */
+  placement?: Record<string, unknown>;
   title?: LocalizedString;
   description?: LocalizedString;
   /** Duration in ms for autoplay */
