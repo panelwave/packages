@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.0.0",
+   "title":"PanelWave Manifest 1.1.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -646,6 +646,36 @@
             },
             "locale":{
                "$ref":"#/$defs/LocaleCode"
+            },
+            "direction":{
+               "type":"string",
+               "enum":["forward", "reverse"],
+               "default":"forward",
+               "description":"Playback direction of this variant (schema 1.1+). `reverse` marks a pre-rendered, time-reversed encode (video only, typically without audio) used for smooth `pingpong` playback; the player falls back to frame-stepping when no `reverse` variant is available."
+            }
+         }
+      },
+      "VideoPoster":{
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "src"
+         ],
+         "properties":{
+            "src":{
+               "type":"string"
+            },
+            "mime":{
+               "type":"string",
+               "pattern":"^image\\/"
+            },
+            "w":{
+               "type":"integer",
+               "minimum":1
+            },
+            "h":{
+               "type":"integer",
+               "minimum":1
             }
          }
       },
@@ -799,6 +829,10 @@
                      "items":{
                         "$ref":"#/$defs/VideoVariant"
                      }
+                  },
+                  "poster":{
+                     "$ref":"#/$defs/VideoPoster",
+                     "description":"Poster/preview frame shown before playback starts (schema 1.1+), e.g. for click-to-play and reduced-motion presentations."
                   }
                }
             }
@@ -1162,6 +1196,23 @@
                   "scrollingDefault":{
                      "type":"boolean",
                      "default":true
+                  },
+                  "videoPlayModeDefault":{
+                     "type":"string",
+                     "enum":["once", "loop", "pingpong", "loop-from"],
+                     "default":"once",
+                     "description":"Work-level default for VideoLayer `playMode` (schema 1.1+), used when a layer does not specify its own `playMode`. Cascades work default -> per-layer override."
+                  },
+                  "videoStartModeDefault":{
+                     "type":"string",
+                     "enum":["on-view", "on-hover", "on-click"],
+                     "default":"on-view",
+                     "description":"Work-level default for VideoLayer `startMode` (schema 1.1+), used when a layer does not specify its own `startMode`. Cascades work default -> per-layer override."
+                  },
+                  "videoMutedDefault":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Work-level default for VideoLayer `muted` (schema 1.1+), used when a layer does not specify its own `muted`. Cascades work default -> per-layer override."
                   }
                }
             },
@@ -1978,11 +2029,13 @@
                   },
                   "autoplay":{
                      "type":"boolean",
-                     "default":false
+                     "default":false,
+                     "description":"Legacy field (schema 1.0). Superseded by `startMode`. If `startMode` is absent: `autoplay: true` is interpreted as `startMode: \"on-view\"`; explicit `autoplay: false` is interpreted as `startMode: \"on-click\"`. Ignored when `startMode` is present."
                   },
                   "loop":{
                      "type":"boolean",
-                     "default":false
+                     "default":false,
+                     "description":"Legacy field (schema 1.0). Superseded by `playMode`. If `playMode` is absent, `loop: true` is interpreted as `playMode: \"loop\"`. Ignored when `playMode` is present."
                   },
                   "muted":{
                      "type":"boolean",
@@ -1991,6 +2044,28 @@
                   "startAtMs":{
                      "type":"integer",
                      "minimum":0
+                  },
+                  "playMode":{
+                     "type":"string",
+                     "enum":["once", "loop", "pingpong", "loop-from"],
+                     "default":"once",
+                     "description":"Playback mode (schema 1.1+). `once`: play through and freeze on the last frame. `loop`: play from `startAtMs` to the end, seek back, repeat. `pingpong`: play forward then backward then forward, repeating; prefers a `direction: \"reverse\"` VideoVariant for the backward pass, otherwise the player frame-steps backward. `loop-from`: play once from `startAtMs` to the end, then loop endlessly from `loopFromMs` to the end. Takes precedence over the legacy `loop` field when present; when absent, `loop: true` is treated as `playMode: \"loop\"`."
+                  },
+                  "loopFromMs":{
+                     "type":"integer",
+                     "minimum":0,
+                     "description":"Loop re-entry point in milliseconds, only used when `playMode` is `\"loop-from\"`. Absolute media time on the video's own timeline (independent of `startAtMs`). Constraint (not enforceable in JSON Schema): `startAtMs <= loopFromMs < ` the asset's `durationMs`."
+                  },
+                  "startMode":{
+                     "type":"string",
+                     "enum":["on-view", "on-hover", "on-click"],
+                     "default":"on-view",
+                     "description":"Playback start trigger (schema 1.1+). `on-view`: starts when the panel becomes current (panel view) or when the placement enters the viewport (page view). `on-hover`: starts on mouseover; page view only, falls back to `on-click` in panel view and on touch devices. `on-click`: starts on click/tap and toggles play/pause thereafter. Takes precedence over the legacy `autoplay` field when present; when absent, `autoplay: true` is treated as `startMode: \"on-view\"` and explicit `autoplay: false` as `startMode: \"on-click\"`."
+                  },
+                  "controls":{
+                     "type":"boolean",
+                     "default":false,
+                     "description":"Show native video controls (schema 1.1+)."
                   }
                }
             }
@@ -3230,7 +3305,11 @@
                      "bookmark",
                      "share",
                      "comment_posted",
-                     "export_triggered"
+                     "export_triggered",
+                     "videoPlay",
+                     "videoPause",
+                     "videoEnded",
+                     "videoLoop"
                   ]
                },
                "uniqueItems":true

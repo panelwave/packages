@@ -1,7 +1,7 @@
 /**
- * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.0 manifest format.
+ * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.1 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.1.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -269,6 +269,9 @@ export interface AudioVariant {
   locale?: LocaleCode;
 }
 
+/** Playback direction of a VideoVariant. `reverse` is a pre-rendered, time-reversed encode used for smooth ping-pong playback. */
+export type VideoDirection = 'forward' | 'reverse';
+
 export interface VideoVariant {
   src: string;
   mime: string;
@@ -278,6 +281,16 @@ export interface VideoVariant {
   codec?: string;
   streaming?: boolean;
   locale?: LocaleCode;
+  /** @default 'forward' */
+  direction?: VideoDirection;
+}
+
+/** Poster/preview frame shown before playback starts (schema 1.1+), e.g. for click-to-play and reduced-motion presentations. */
+export interface VideoPoster {
+  src: string;
+  mime?: string;
+  w?: number;
+  h?: number;
 }
 
 export interface SubtitleVariant {
@@ -312,6 +325,7 @@ export interface AssetCatalogItemAudio extends AssetCommon {
 export interface AssetCatalogItemVideo extends AssetCommon {
   category: 'video';
   variants: VideoVariant[];
+  poster?: VideoPoster;
 }
 
 export interface AssetCatalogItemSubtitle extends AssetCommon {
@@ -399,6 +413,12 @@ export interface UIDefaults {
   audioDefault?: boolean;
   sfxDefault?: boolean;
   scrollingDefault?: boolean;
+  /** Work-level default for VideoLayer `playMode`, used when a layer does not specify its own. @default 'once' */
+  videoPlayModeDefault?: VideoPlayMode;
+  /** Work-level default for VideoLayer `startMode`, used when a layer does not specify its own. @default 'on-view' */
+  videoStartModeDefault?: VideoStartMode;
+  /** Work-level default for VideoLayer `muted`, used when a layer does not specify its own. @default true */
+  videoMutedDefault?: boolean;
 }
 
 export interface PreloadSettings {
@@ -582,13 +602,39 @@ export interface VectorLayer extends LayerCommon {
   assetId: Identifier;
 }
 
+/** Playback mode for a VideoLayer. @default 'once' */
+export type VideoPlayMode = 'once' | 'loop' | 'pingpong' | 'loop-from';
+
+/** Playback start trigger for a VideoLayer. `on-hover` is page-view only and falls back to `on-click` elsewhere. @default 'on-view' */
+export type VideoStartMode = 'on-view' | 'on-hover' | 'on-click';
+
 export interface VideoLayer extends LayerCommon {
   kind: 'video';
   assetId: Identifier;
+  /**
+   * Legacy field (schema 1.0), not deprecated. Superseded by `startMode`. If `startMode` is absent: `true` maps to
+   * `startMode: 'on-view'`, explicit `false` maps to `startMode: 'on-click'`. Ignored when `startMode` is present.
+   */
   autoplay?: boolean;
+  /**
+   * Legacy field (schema 1.0), not deprecated. Superseded by `playMode`. If `playMode` is absent, `true` maps to
+   * `playMode: 'loop'`. Ignored when `playMode` is present.
+   */
   loop?: boolean;
   muted?: boolean;
   startAtMs?: number;
+  /** Takes precedence over the legacy `loop` field when present. @default 'once' */
+  playMode?: VideoPlayMode;
+  /**
+   * Loop re-entry point in milliseconds, only used when `playMode` is `'loop-from'`.
+   * Absolute media time on the video's own timeline (independent of `startAtMs`).
+   * Constraint (enforced in application code, not in the type system): `startAtMs <= loopFromMs < asset.durationMs`.
+   */
+  loopFromMs?: number;
+  /** Takes precedence over the legacy `autoplay` field when present. @default 'on-view' */
+  startMode?: VideoStartMode;
+  /** Show native video controls. @default false */
+  controls?: boolean;
 }
 
 export interface AudioLayer extends LayerCommon {
@@ -978,7 +1024,11 @@ export type TrackingEvent =
   | 'bookmark'
   | 'share'
   | 'comment_posted'
-  | 'export_triggered';
+  | 'export_triggered'
+  | 'videoPlay'
+  | 'videoPause'
+  | 'videoEnded'
+  | 'videoLoop';
 
 export interface TrackingConsent {
   required?: boolean;
