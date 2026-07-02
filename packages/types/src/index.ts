@@ -633,6 +633,8 @@ export interface VideoLayer extends LayerCommon {
   loopFromMs?: number;
   /** Takes precedence over the legacy `autoplay` field when present. @default 'on-view' */
   startMode?: VideoStartMode;
+  /** Show native video controls. @default false */
+  controls?: boolean;
 }
 
 export interface AudioLayer extends LayerCommon {
@@ -1022,7 +1024,11 @@ export type TrackingEvent =
   | 'bookmark'
   | 'share'
   | 'comment_posted'
-  | 'export_triggered';
+  | 'export_triggered'
+  | 'videoPlay'
+  | 'videoPause'
+  | 'videoEnded'
+  | 'videoLoop';
 
 export interface TrackingConsent {
   required?: boolean;

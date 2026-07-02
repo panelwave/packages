@@ -2061,6 +2061,11 @@
                      "enum":["on-view", "on-hover", "on-click"],
                      "default":"on-view",
                      "description":"Playback start trigger (schema 1.1+). `on-view`: starts when the panel becomes current (panel view) or when the placement enters the viewport (page view). `on-hover`: starts on mouseover; page view only, falls back to `on-click` in panel view and on touch devices. `on-click`: starts on click/tap and toggles play/pause thereafter. Takes precedence over the legacy `autoplay` field when present; when absent, `autoplay: true` is treated as `startMode: \"on-view\"` and explicit `autoplay: false` as `startMode: \"on-click\"`."
+                  },
+                  "controls":{
+                     "type":"boolean",
+                     "default":false,
+                     "description":"Show native video controls (schema 1.1+)."
                   }
                }
             }
@@ -3300,7 +3305,11 @@
                      "bookmark",
                      "share",
                      "comment_posted",
-                     "export_triggered"
+                     "export_triggered",
+                     "videoPlay",
+                     "videoPause",
+                     "videoEnded",
+                     "videoLoop"
                   ]
                },
                "uniqueItems":true
