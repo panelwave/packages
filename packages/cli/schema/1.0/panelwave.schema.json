@@ -655,6 +655,30 @@
             }
          }
       },
+      "VideoPoster":{
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "src"
+         ],
+         "properties":{
+            "src":{
+               "type":"string"
+            },
+            "mime":{
+               "type":"string",
+               "pattern":"^image\\/"
+            },
+            "w":{
+               "type":"integer",
+               "minimum":1
+            },
+            "h":{
+               "type":"integer",
+               "minimum":1
+            }
+         }
+      },
       "SubtitleVariant":{
          "type":"object",
          "additionalProperties":false,
@@ -805,6 +829,10 @@
                      "items":{
                         "$ref":"#/$defs/VideoVariant"
                      }
+                  },
+                  "poster":{
+                     "$ref":"#/$defs/VideoPoster",
+                     "description":"Poster/preview frame shown before playback starts (schema 1.1+), e.g. for click-to-play and reduced-motion presentations."
                   }
                }
             }

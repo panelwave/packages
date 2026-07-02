@@ -285,6 +285,14 @@ export interface VideoVariant {
   direction?: VideoDirection;
 }
 
+/** Poster/preview frame shown before playback starts (schema 1.1+), e.g. for click-to-play and reduced-motion presentations. */
+export interface VideoPoster {
+  src: string;
+  mime?: string;
+  w?: number;
+  h?: number;
+}
+
 export interface SubtitleVariant {
   src: string;
   mime: 'text/vtt' | 'application/x-subrip';
@@ -317,6 +325,7 @@ export interface AssetCatalogItemAudio extends AssetCommon {
 export interface AssetCatalogItemVideo extends AssetCommon {
   category: 'video';
   variants: VideoVariant[];
+  poster?: VideoPoster;
 }
 
 export interface AssetCatalogItemSubtitle extends AssetCommon {
