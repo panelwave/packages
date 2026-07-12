@@ -408,6 +408,17 @@ export interface TypographySettings {
     style?: PanelBorderStyle;
   };
   gutter_width?: number;
+  /**
+   * Named reusable text style presets (schema 1.3+), referenced by
+   * TextLayer.styleRef. Resolution: preset -> inline `style` (inline wins).
+   */
+  textStyles?: Record<string, TextLayerStyle>;
+  /**
+   * Named reusable balloon presets (schema 1.3+), referenced by
+   * SpeechBubble.styleRef. Merge cascade:
+   * work balloon_config -> character balloonConfig -> preset -> inline balloonConfig.
+   */
+  balloonPresets?: Record<string, BalloonConfigOverride>;
 }
 
 export interface UIDefaults {
@@ -662,6 +673,8 @@ export interface TextLayer extends LayerCommon {
   kind: 'text';
   /** Localized text. Optional because CMS text layers may instead carry a plain `content` string. */
   text?: LocalizedString;
+  /** Name of a reusable preset in settings.typography.textStyles (schema 1.3+). */
+  styleRef?: Identifier;
   style?: TextLayerStyle;
 }
 
@@ -726,6 +739,8 @@ export interface SpeechBubble {
   text: LocalizedString;
   audioAssetId?: Identifier;
   shape: BoundingBox;
+  /** Name of a reusable preset in settings.typography.balloonPresets (schema 1.3+). */
+  styleRef?: Identifier;
   balloonConfig?: BalloonConfigOverride;
   visibleIf?: JsonLogic;
   /** Editor-computed balloon tail geometry (tip/anchor points, width). */
