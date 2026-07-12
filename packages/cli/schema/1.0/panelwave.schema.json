@@ -1206,7 +1206,8 @@
                   },
                   "speechDefault":{
                      "type":"boolean",
-                     "default":true
+                     "default":true,
+                     "description":"Initial state of the reader's speech-bubble toggle. Since schema 1.3, ALL speech bubbles are implicitly gated by this toggle — manifests must not (and need not) replicate it via per-bubble visibleIf; visibleIf is reserved for story logic."
                   },
                   "audioDefault":{
                      "type":"boolean",
@@ -2449,7 +2450,8 @@
                "description":"Per-bubble balloon style overrides (merged onto the styleRef preset, character, or work-level defaults)"
             },
             "visibleIf":{
-               "$ref":"#/$defs/JsonLogic"
+               "$ref":"#/$defs/JsonLogic",
+               "description":"Story-logic visibility condition (e.g. show a clue bubble once a variable is set). Since schema 1.3, every speech bubble is implicitly subject to the reader's global speech toggle (initial state: settings.ui.speechDefault) — the toggle is ANDed on top of this condition by the player. Do NOT encode the speech preference here (no {\"var\":\"prefs.speech\"} boilerplate); a bubble without visibleIf is simply always eligible while speech is on."
             },
             "tail":{
                "type":"object",
