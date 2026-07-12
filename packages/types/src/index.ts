@@ -253,7 +253,8 @@ export interface AssetCommon {
 
 export interface ImageVariant {
   src: string;
-  mime: string;
+  /** Optional since schema 1.2: derived from the src file extension when omitted. */
+  mime?: string;
   w: number;
   h: number;
   density?: number;
@@ -261,7 +262,8 @@ export interface ImageVariant {
 
 export interface AudioVariant {
   src: string;
-  mime: string;
+  /** Optional since schema 1.2: derived from the src file extension when omitted. */
+  mime?: string;
   bitrateKbps?: number;
   channels?: number;
   sampleRateHz?: number;
@@ -274,7 +276,8 @@ export type VideoDirection = 'forward' | 'reverse';
 
 export interface VideoVariant {
   src: string;
-  mime: string;
+  /** Optional since schema 1.2: derived from the src file extension when omitted. */
+  mime?: string;
   w: number;
   h: number;
   fps?: number;
@@ -295,13 +298,15 @@ export interface VideoPoster {
 
 export interface SubtitleVariant {
   src: string;
-  mime: 'text/vtt' | 'application/x-subrip';
+  /** Optional since schema 1.2: derived from the src file extension when omitted. */
+  mime?: 'text/vtt' | 'application/x-subrip';
   locale: LocaleCode;
 }
 
 export interface VectorVariant {
   src: string;
-  mime: 'image/svg+xml' | 'application/pdf';
+  /** Optional since schema 1.2: derived from the src file extension when omitted. */
+  mime?: 'image/svg+xml' | 'application/pdf';
 }
 
 export interface JsonVariant {

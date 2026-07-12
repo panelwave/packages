@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.1.0",
+   "title":"PanelWave Manifest 1.2.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -109,7 +109,10 @@
             "a4-landscape",
             "us-portrait",
             "us-landscape",
-            "video-16-9"
+            "video-16-9",
+            "square",
+            "desktop-landscape",
+            "tablet-portrait"
          ]
       },
       "Transition":{
@@ -545,8 +548,7 @@
          "required":[
             "src",
             "w",
-            "h",
-            "mime"
+            "h"
          ],
          "properties":{
             "src":{
@@ -554,7 +556,8 @@
             },
             "mime":{
                "type":"string",
-               "pattern":"^image\\/"
+               "pattern":"^image\\/",
+               "description":"Optional since schema 1.2: when omitted, consumers derive the MIME type from the src file extension (png, jpg/jpeg, webp, gif, avif -> image/*). Required when src has no recognizable extension."
             },
             "w":{
                "type":"integer",
@@ -575,8 +578,7 @@
          "type":"object",
          "additionalProperties":false,
          "required":[
-            "src",
-            "mime"
+            "src"
          ],
          "properties":{
             "src":{
@@ -584,7 +586,8 @@
             },
             "mime":{
                "type":"string",
-               "pattern":"^audio\\/"
+               "pattern":"^audio\\/",
+               "description":"Optional since schema 1.2: when omitted, consumers derive the MIME type from the src file extension (mp3 -> audio/mpeg, m4a -> audio/mp4, ogg, wav -> audio/*). Required when src has no recognizable extension."
             },
             "bitrateKbps":{
                "type":"integer",
@@ -613,7 +616,6 @@
          "additionalProperties":false,
          "required":[
             "src",
-            "mime",
             "w",
             "h"
          ],
@@ -623,7 +625,8 @@
             },
             "mime":{
                "type":"string",
-               "pattern":"^(video\\/|application\\/vnd\\.apple\\.mpegurl)"
+               "pattern":"^(video\\/|application\\/vnd\\.apple\\.mpegurl)",
+               "description":"Optional since schema 1.2: when omitted, consumers derive the MIME type from the src file extension (mp4 -> video/mp4, webm -> video/webm, m3u8 -> application/vnd.apple.mpegurl). Required when src has no recognizable extension."
             },
             "w":{
                "type":"integer",
@@ -684,7 +687,6 @@
          "additionalProperties":false,
          "required":[
             "src",
-            "mime",
             "locale"
          ],
          "properties":{
@@ -696,7 +698,8 @@
                "enum":[
                   "text/vtt",
                   "application/x-subrip"
-               ]
+               ],
+               "description":"Optional since schema 1.2: when omitted, consumers derive the MIME type from the src file extension (vtt -> text/vtt, srt -> application/x-subrip). Required when src has no recognizable extension."
             },
             "locale":{
                "$ref":"#/$defs/LocaleCode"
@@ -707,8 +710,7 @@
          "type":"object",
          "additionalProperties":false,
          "required":[
-            "src",
-            "mime"
+            "src"
          ],
          "properties":{
             "src":{
@@ -719,7 +721,8 @@
                "enum":[
                   "image/svg+xml",
                   "application/pdf"
-               ]
+               ],
+               "description":"Optional since schema 1.2: when omitted, consumers derive the MIME type from the src file extension (svg -> image/svg+xml, pdf -> application/pdf). Required when src has no recognizable extension."
             }
          }
       },
@@ -1304,6 +1307,10 @@
             "id":{
                "$ref":"#/$defs/Identifier"
             },
+            "chapterId":{
+               "type":"string",
+               "description":"CMS database chapter UUID. Used by the editor for API calls; not required by the player."
+            },
             "title":{
                "$ref":"#/$defs/LocalizedString"
             },
@@ -1347,6 +1354,10 @@
          "properties":{
             "id":{
                "$ref":"#/$defs/Identifier"
+            },
+            "pageId":{
+               "type":"string",
+               "description":"CMS-internal database identifier for the page (UUID). Used by the editor for API calls; players may ignore it."
             },
             "title":{
                "$ref":"#/$defs/LocalizedString"
@@ -1669,11 +1680,19 @@
                }
             },
             "transition":{
-               "$ref":"#/$defs/Transition"
+               "$ref":"#/$defs/Transition",
+               "description":"Optional. When omitted, the player uses the active output format's settings.outputPresets[format].defaultTransition; if no preset defines one, it falls back to a plain cut. Exporters should only write transitions that differ from the format default."
             },
             "priority":{
                "type":"integer",
                "minimum":0
+            },
+            "mutations":{
+               "type":"array",
+               "description":"Editor edge metadata/mutation ops (e.g. hotspot/edge-type descriptors).",
+               "items":{
+                  "type":"object"
+               }
             }
          }
       },
@@ -1710,6 +1729,10 @@
          "properties":{
             "id":{
                "$ref":"#/$defs/Identifier"
+            },
+            "placement":{
+               "type":"object",
+               "description":"Editor placement of the panel within its page layout (normalized x/y/w/h, rotation, grid rows/columns)."
             },
             "title":{
                "$ref":"#/$defs/LocalizedString"
@@ -1922,6 +1945,63 @@
             },
             "visibleIf":{
                "$ref":"#/$defs/JsonLogic"
+            },
+            "name":{
+               "type":"string",
+               "description":"Human-friendly layer name (authoring aid)."
+            },
+            "x":{
+               "type":"number",
+               "description":"Editor transform: X position."
+            },
+            "y":{
+               "type":"number",
+               "description":"Editor transform: Y position."
+            },
+            "width":{
+               "type":"number"
+            },
+            "height":{
+               "type":"number"
+            },
+            "scaleX":{
+               "type":"number"
+            },
+            "scaleY":{
+               "type":"number"
+            },
+            "rotation":{
+               "type":"number"
+            },
+            "locked":{
+               "type":"boolean",
+               "description":"Editor state: layer locked from selection/edits."
+            },
+            "visible":{
+               "type":"boolean",
+               "description":"Editor state: layer visibility toggle."
+            },
+            "content":{
+               "type":"string",
+               "description":"Editor text-layer content (authoring aid)."
+            },
+            "fontFamily":{
+               "type":"string"
+            },
+            "fontSize":{
+               "type":"number"
+            },
+            "fontWeight":{
+               "type":"string"
+            },
+            "color":{
+               "type":"string"
+            },
+            "align":{
+               "type":"string"
+            },
+            "verticalAlign":{
+               "type":"string"
             }
          }
       },
@@ -2118,8 +2198,7 @@
             {
                "type":"object",
                "required":[
-                  "kind",
-                  "text"
+                  "kind"
                ],
                "properties":{
                   "kind":{
@@ -2128,6 +2207,10 @@
                   },
                   "text":{
                      "$ref":"#/$defs/LocalizedString"
+                  },
+                  "content":{
+                     "type":"string",
+                     "description":"CMS text-layer content (plain string; alternative to the localized `text`)."
                   },
                   "style":{
                      "type":"object",
@@ -2360,6 +2443,34 @@
             },
             "visibleIf":{
                "$ref":"#/$defs/JsonLogic"
+            },
+            "tail":{
+               "type":"object",
+               "description":"Editor-computed balloon tail geometry (tip/anchor points, width)."
+            },
+            "tailStyle":{
+               "type":"string",
+               "description":"Editor tail style preset (e.g. \"normal\")."
+            },
+            "textStyle":{
+               "type":"object",
+               "description":"Editor text styling (font, color, alignment, padding)."
+            },
+            "data":{
+               "type":"object",
+               "description":"Editor-computed shape geometry (e.g. ellipse cx/cy/rx/ry)."
+            },
+            "style":{
+               "type":"object",
+               "description":"Editor bubble style (font, colors, stroke)."
+            },
+            "locked":{
+               "type":"boolean",
+               "description":"Editor state: bubble locked from selection/edits."
+            },
+            "visible":{
+               "type":"boolean",
+               "description":"Editor state: bubble visibility toggle."
             }
          }
       },
@@ -3146,6 +3257,44 @@
             "gated":{
                "type":"boolean",
                "default":false
+            },
+            "contentType":{
+               "type":"string",
+               "enum":[
+                  "image",
+                  "video",
+                  "audio",
+                  "pdf",
+                  "text"
+               ]
+            },
+            "url":{
+               "type":"string"
+            },
+            "thumbnail":{
+               "type":"string"
+            },
+            "width":{
+               "type":"integer",
+               "minimum":0
+            },
+            "height":{
+               "type":"integer",
+               "minimum":0
+            },
+            "durationMs":{
+               "type":"number",
+               "minimum":0
+            },
+            "mimeType":{
+               "type":"string"
+            },
+            "downloadable":{
+               "type":"boolean",
+               "default":false
+            },
+            "requiredTier":{
+               "type":"string"
             }
          }
       },
@@ -3215,6 +3364,49 @@
             "ageGate":{
                "type":"integer",
                "minimum":0
+            },
+            "name":{
+               "type":"string",
+               "description":"CMS: human-friendly rule name."
+            },
+            "description":{
+               "type":"string"
+            },
+            "entitlementType":{
+               "type":"string",
+               "description":"CMS entitlement kind (e.g. purchase, subscription)."
+            },
+            "subscriptionTiers":{
+               "type":"array",
+               "items":{
+                  "type":"string"
+               }
+            },
+            "price":{
+               "type":"object",
+               "description":"CMS embedded price (amount + currency).",
+               "properties":{
+                  "amount":{
+                     "type":"number"
+                  },
+                  "currency":{
+                     "type":"string"
+                  }
+               }
+            },
+            "minimumAge":{
+               "type":"integer",
+               "minimum":0
+            },
+            "previewPanelCount":{
+               "type":"integer",
+               "minimum":0
+            },
+            "targetPanelIds":{
+               "type":"array",
+               "items":{
+                  "$ref":"#/$defs/Identifier"
+               }
             }
          },
          "allOf":[
