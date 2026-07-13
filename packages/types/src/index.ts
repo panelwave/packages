@@ -132,6 +132,7 @@ export interface ContentWarning {
 export type BalloonType =
   | 'normal'
   | 'rectangle'
+  | 'narrator'
   | 'cutTop'
   | 'cutTopRight'
   | 'cutTopLeft'
