@@ -2521,6 +2521,7 @@
                "enum":[
                   "normal",
                   "rectangle",
+                  "narrator",
                   "cutTop",
                   "cutTopRight",
                   "cutTopLeft",
@@ -2530,7 +2531,7 @@
                   "connector"
                ],
                "default":"normal",
-               "description":"Visual type of the balloon shape"
+               "description":"Visual type of the balloon shape ('narrator' is a sharp-cornered caption box)"
             },
             "cornerRadius":{
                "type":"number",
@@ -2605,6 +2606,7 @@
                "enum":[
                   "normal",
                   "rectangle",
+                  "narrator",
                   "cutTop",
                   "cutTopRight",
                   "cutTopLeft",
@@ -3534,6 +3536,7 @@
                      "share",
                      "comment_posted",
                      "export_triggered",
+                     "work_complete",
                      "videoPlay",
                      "videoPause",
                      "videoEnded",

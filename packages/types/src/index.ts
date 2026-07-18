@@ -1046,6 +1046,7 @@ export type TrackingEvent =
   | 'share'
   | 'comment_posted'
   | 'export_triggered'
+  | 'work_complete'
   | 'videoPlay'
   | 'videoPause'
   | 'videoEnded'
