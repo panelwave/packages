@@ -447,7 +447,15 @@ export interface PreloadSettings {
 export interface FormatPreset {
   panelView?: boolean;
   pageView?: boolean;
+  /**
+   * Enable infinite-canvas view for this output format (default false).
+   * A chapter renders in canvas view only when this is true AND the chapter
+   * defines a `canvas`; otherwise players fall back to panel view. Since 1.4.
+   */
+  canvasView?: boolean;
   defaultTransition?: Transition;
+  /** Default camera move for edges without an explicit `cameraMove`. Since 1.4. */
+  defaultCameraMove?: CameraMove;
 }
 
 export interface Settings {
@@ -475,6 +483,12 @@ export interface Edge {
   condition?: JsonLogic;
   action?: Mutation[];
   transition?: Transition;
+  /**
+   * Camera travel used when this edge is traversed in canvas view.
+   * Inheritance mirrors `transition`: edge → format preset `defaultCameraMove`
+   * → built-in direct move (hold zoom, 800ms, ease-in-out). Since 1.4.
+   */
+  cameraMove?: CameraMove;
   priority?: number;
   /** Editor edge metadata/mutation ops (e.g. hotspot/edge-type descriptors). */
   mutations?: Record<string, unknown>[];
@@ -488,6 +502,117 @@ export interface Graph {
   entry: Identifier | Identifier[];
   nodes?: Record<string, GraphNode>;
   edges: Edge[];
+}
+
+// ---------------------------------------------------------------------------
+// Infinite canvas (since 1.4)
+// ---------------------------------------------------------------------------
+
+/**
+ * A point on the infinite-canvas plane. World units: 1 unit = 1 CSS pixel at
+ * zoom 1.0. Unbounded; negatives allowed.
+ */
+export interface WorldPoint {
+  x: number;
+  y: number;
+}
+
+/** A rectangle on the infinite-canvas plane in world units. */
+export interface WorldRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export type CameraMovePath = 'direct' | 'arc' | 'waypoints';
+
+/**
+ * `hold` keeps the framing zoom, `pull-back` zooms out far enough to see
+ * source and target before gliding in, `dive` zooms straight into the target.
+ */
+export type CameraZoomProfile = 'hold' | 'pull-back' | 'dive';
+
+/** Animated world-space camera travel between two panels in canvas view. */
+export interface CameraMove {
+  path?: CameraMovePath;
+  /** Intermediate world-space points; only used when `path` is `"waypoints"`. */
+  waypoints?: WorldPoint[];
+  zoomProfile?: CameraZoomProfile;
+  /** Duration in milliseconds (0-60000) */
+  durationMs?: number;
+  easing?: Easing;
+  /** Transition used instead of the glide under prefers-reduced-motion. */
+  reducedMotionFallback?: Transition;
+}
+
+export type CanvasRevealMode = 'always' | 'on-approach' | 'on-visit';
+
+/** Position and size of one panel on the infinite-canvas plane (world units). */
+export interface CanvasPlacement {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Stacking order on the plane; overlapping panels are allowed. */
+  z?: number;
+  /** Rotation in degrees (-180..180). */
+  r?: number;
+  origin?: PlacementOrigin;
+  /** Panel-relative rect the camera frames when this panel becomes current. */
+  enterFraming?: NormalizedRect;
+  revealMode?: CanvasRevealMode;
+}
+
+/** Non-panel set dressing placed on the plane. Purely presentational. */
+export interface CanvasDecoration {
+  assetId: Identifier;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  z?: number;
+  r?: number;
+  opacity?: NormalizedNumber;
+  /** Parallax factor relative to camera movement (0 = locked to the plane). */
+  parallaxDepth?: number;
+}
+
+export type CanvasFitMode = 'contain' | 'cover' | 'width' | 'height';
+export type CanvasFreeRoam = 'off' | 'between-moves' | 'always';
+
+export interface CanvasOverviewPolicy {
+  enabled?: boolean;
+  /** Lowest allowed zoom factor when zooming out to the overview. */
+  maxZoomOut?: number;
+}
+
+/** Chapter-level camera behavior in canvas view. */
+export interface CanvasCameraPolicy {
+  fitMode?: CanvasFitMode;
+  overview?: CanvasOverviewPolicy;
+  freeRoam?: CanvasFreeRoam;
+  /** `"auto"` = union of placements plus margin, or an explicit world rect. */
+  bounds?: 'auto' | WorldRect;
+}
+
+export interface CanvasBackground {
+  color?: ColorHex;
+  assetId?: Identifier;
+  repeat?: 'tile' | 'stretch' | 'fixed';
+}
+
+/**
+ * Infinite-canvas layout for a chapter: all placed panels share one continuous
+ * world-space plane; the reader's viewport travels across it along the graph.
+ * The graph remains the trail — canvas only adds spatial position.
+ */
+export interface CanvasLayout {
+  background?: CanvasBackground;
+  /** Map of panel id (must exist in the chapter's `panels`) to its placement. */
+  placements: Record<Identifier, CanvasPlacement>;
+  camera?: CanvasCameraPolicy;
+  decorations?: CanvasDecoration[];
 }
 
 // ---------------------------------------------------------------------------
@@ -952,6 +1077,12 @@ export interface Chapter {
   panels: Record<Identifier, Panel>;
   sequenceAudioTracks?: SequenceAudioTrack[];
   graph: Graph;
+  /**
+   * Optional infinite-canvas layout placing this chapter's panels on one
+   * continuous world-space plane. Chapters without it render in panel/page
+   * view as before. Since 1.4.
+   */
+  canvas?: CanvasLayout;
 }
 
 // ---------------------------------------------------------------------------
