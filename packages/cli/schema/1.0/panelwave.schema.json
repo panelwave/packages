@@ -2173,6 +2173,7 @@
             },
             "variants":{
                "type":"array",
+               "description":"Conditional content variants, evaluated in order — the first whose `when` matches applies (base panel when none match).",
                "items":{
                   "$ref":"#/$defs/PanelVariant"
                },
@@ -3392,6 +3393,7 @@
       "PanelVariant":{
          "type":"object",
          "additionalProperties":false,
+         "description":"Conditional alternate content of one panel. Variants are evaluated in array order against the current variable context; the FIRST variant whose `when` is truthy applies. Each property present in `overrides` replaces the base panel's value wholesale (no deep merge).",
          "required":[
             "id",
             "when",
@@ -3402,7 +3404,8 @@
                "$ref":"#/$defs/Identifier"
             },
             "when":{
-               "$ref":"#/$defs/JsonLogic"
+               "$ref":"#/$defs/JsonLogic",
+               "description":"JSON Logic condition over the variable context; the variant applies when truthy. Evaluation errors count as false."
             },
             "overrides":{
                "$ref":"#/$defs/PanelPartial"
