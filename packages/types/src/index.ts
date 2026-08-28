@@ -250,6 +250,8 @@ export interface AssetCommon {
   durationMs?: number;
   sha256?: string;
   tags?: string[];
+  /** Since schema 1.5: ids of `Assets.folders` entries this asset is filed under (n:m). */
+  folderIds?: Identifier[];
 }
 
 export interface ImageVariant {
@@ -363,9 +365,58 @@ export type AssetCatalogItem =
   | AssetCatalogItemJson
   | AssetCatalogItemPluginPayload;
 
+/** Since schema 1.5: authoring asset-library folder (tree via parentId). */
+export interface AssetFolder {
+  id: Identifier;
+  name: string;
+  parentId?: Identifier;
+  order?: number;
+}
+
 export interface Assets {
   base?: AssetBase;
+  /** Since schema 1.5: authoring asset-library folder tree. Rendering consumers may ignore this. */
+  folders?: AssetFolder[];
   catalog?: AssetCatalogItem[];
+}
+
+// ---------------------------------------------------------------------------
+// Localization (schema 1.5) — translation workflow state (authoring metadata)
+// ---------------------------------------------------------------------------
+
+export interface LocalizationLocale {
+  code: LocaleCode;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export interface LocalizationValue {
+  text: string;
+  /** True when the translation was machine-generated. */
+  machine?: boolean;
+}
+
+export interface LocalizationEntry {
+  key: string;
+  defaultText: string;
+  category?: string;
+  context?: string;
+  /** True when the default text changed after this entry was translated. */
+  isStale?: boolean;
+  values?: Record<string, LocalizationValue>;
+}
+
+export interface GlossaryTerm {
+  term: string;
+  caseSensitive?: boolean;
+  translations?: Record<string, string>;
+}
+
+/** Since schema 1.5: translation workflow state. Rendering consumers may ignore this block. */
+export interface Localization {
+  locales?: LocalizationLocale[];
+  entries?: LocalizationEntry[];
+  glossary?: GlossaryTerm[];
 }
 
 // ---------------------------------------------------------------------------
@@ -1240,6 +1291,8 @@ export interface PanelwaveManifest {
   paywall?: Paywall;
   tracking?: Tracking;
   ui?: UISettings;
+  /** Since schema 1.5: translation workflow state (authoring metadata). */
+  localization?: Localization;
   /** Extension properties (x-*) */
   [key: `x-${string}`]: unknown;
 }

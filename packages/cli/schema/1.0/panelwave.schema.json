@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.4.0",
+   "title":"PanelWave Manifest 1.5.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -24,6 +24,9 @@
       },
       "settings":{
          "$ref":"#/$defs/Settings"
+      },
+      "localization":{
+         "$ref":"#/$defs/Localization"
       },
       "chapters":{
          "type":"array",
@@ -474,6 +477,13 @@
                   }
                }
             },
+            "folders":{
+               "type":"array",
+               "description":"Since schema 1.5: authoring asset-library folder tree. Rendering consumers may ignore this block.",
+               "items":{
+                  "$ref":"#/$defs/AssetFolder"
+               }
+            },
             "catalog":{
                "type":"array",
                "items":{
@@ -536,11 +546,151 @@
                "items":{
                   "type":"string"
                }
+            },
+            "folderIds":{
+               "type":"array",
+               "description":"Since schema 1.5: ids of assets.folders entries this asset is filed under (n:m). Rendering consumers may ignore this field.",
+               "items":{
+                  "$ref":"#/$defs/Identifier"
+               },
+               "uniqueItems":true
             }
          },
          "required":[
             "id"
          ]
+      },
+      "AssetFolder":{
+         "title":"AssetFolder",
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "id",
+            "name"
+         ],
+         "properties":{
+            "id":{
+               "$ref":"#/$defs/Identifier"
+            },
+            "name":{
+               "type":"string",
+               "minLength":1
+            },
+            "parentId":{
+               "$ref":"#/$defs/Identifier"
+            },
+            "order":{
+               "type":"integer",
+               "minimum":0
+            }
+         }
+      },
+      "Localization":{
+         "title":"Localization",
+         "description":"Since schema 1.5: translation workflow state (authoring metadata). Rendering consumers may ignore this block.",
+         "type":"object",
+         "additionalProperties":false,
+         "properties":{
+            "locales":{
+               "type":"array",
+               "items":{
+                  "type":"object",
+                  "additionalProperties":false,
+                  "required":[
+                     "code"
+                  ],
+                  "properties":{
+                     "code":{
+                        "$ref":"#/$defs/LocaleCode"
+                     },
+                     "isDefault":{
+                        "type":"boolean"
+                     },
+                     "isActive":{
+                        "type":"boolean"
+                     }
+                  }
+               }
+            },
+            "entries":{
+               "type":"array",
+               "items":{
+                  "type":"object",
+                  "additionalProperties":false,
+                  "required":[
+                     "key",
+                     "defaultText"
+                  ],
+                  "properties":{
+                     "key":{
+                        "type":"string",
+                        "minLength":1
+                     },
+                     "defaultText":{
+                        "type":"string"
+                     },
+                     "category":{
+                        "type":"string"
+                     },
+                     "context":{
+                        "type":"string"
+                     },
+                     "isStale":{
+                        "type":"boolean"
+                     },
+                     "values":{
+                        "type":"object",
+                        "propertyNames":{
+                           "$ref":"#/$defs/LocaleCode"
+                        },
+                        "additionalProperties":{
+                           "type":"object",
+                           "additionalProperties":false,
+                           "required":[
+                              "text"
+                           ],
+                           "properties":{
+                              "text":{
+                                 "type":"string"
+                              },
+                              "machine":{
+                                 "type":"boolean"
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            },
+            "glossary":{
+               "type":"array",
+               "items":{
+                  "type":"object",
+                  "additionalProperties":false,
+                  "required":[
+                     "term"
+                  ],
+                  "properties":{
+                     "term":{
+                        "type":"string",
+                        "minLength":1
+                     },
+                     "caseSensitive":{
+                        "type":"boolean"
+                     },
+                     "translations":{
+                        "type":"object",
+                        "propertyNames":{
+                           "$ref":"#/$defs/LocaleCode"
+                        },
+                        "additionalProperties":{
+                           "type":"string"
+                        }
+                     }
+                  }
+               }
+            }
+         }
       },
       "ImageVariant":{
          "type":"object",
