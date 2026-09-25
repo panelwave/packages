@@ -6,9 +6,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run check-schema && npm run build --workspaces",
     "build:types": "npm run build --workspace=packages/types",
-    "build:cli": "npm run build --workspace=packages/cli"
+    "build:cli": "npm run check-schema && npm run build --workspace=packages/cli",
+    "sync-schema": "node scripts/sync-schema.js",
+    "check-schema": "node scripts/sync-schema.js --check"
   },
   "keywords": [],
   "license": "MIT"
