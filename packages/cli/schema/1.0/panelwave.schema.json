@@ -3866,6 +3866,60 @@
                   "$ref":"#/$defs/PaywallRule"
                },
                "uniqueItems":true
+            },
+            "products":{
+               "type":"array",
+               "description":"Since schema 1.6: display information for the products and subscription tiers the rules sell, keyed by id. A rule references entries by id through requiredProductIds, requireEntitlement (a product key) or subscriptionTiers; readers use the matching entry's name, description and price for the Buy / Subscribe option and fall back to the rule's name/price, then to the bare id. Entries nothing references are allowed and ignored. Ids should be unique (application-level rule; JSON Schema cannot enforce it on a property).",
+               "items":{
+                  "$ref":"#/$defs/PaywallProduct"
+               },
+               "uniqueItems":true
+            }
+         }
+      },
+      "PaywallProduct":{
+         "title":"PaywallProduct",
+         "description":"Since schema 1.6: reader-facing information about one product or subscription tier from the host's catalogue. Informational only: which product unlocks what is decided by the rules, and the host's checkout remains the authority on the actual price.",
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "id"
+         ],
+         "properties":{
+            "id":{
+               "$ref":"#/$defs/Identifier"
+            },
+            "name":{
+               "$ref":"#/$defs/LocalizedString"
+            },
+            "description":{
+               "$ref":"#/$defs/LocalizedString"
+            },
+            "price":{
+               "type":"object",
+               "description":"Display price (amount + ISO 4217 currency), same shape as PaywallRule.price.",
+               "additionalProperties":false,
+               "required":[
+                  "amount",
+                  "currency"
+               ],
+               "properties":{
+                  "amount":{
+                     "type":"number",
+                     "minimum":0
+                  },
+                  "currency":{
+                     "type":"string"
+                  }
+               }
+            },
+            "type":{
+               "type":"string",
+               "enum":[
+                  "purchase",
+                  "subscription"
+               ],
+               "description":"One-time purchase or subscription (tier). Informational; the referencing rule decides how the option is sold."
             }
          }
       },
@@ -3923,7 +3977,7 @@
             },
             "requiredProductIds":{
                "type":"array",
-               "description":"Since schema 1.6: the products (ids from the host's product catalogue) that unlock a purchase rule. A reader satisfies the rule when they own AT LEAST ONE of the listed products; readers offer one Buy option per listed product. Only meaningful when the rule is a purchase rule (entitlementType/requireEntitlement 'purchase' or a product key); other rule kinds ignore it. When absent, the pre-1.6 behaviour applies: requireEntitlement is the only product hint (a value that is not an entitlement type name names the single product to offer), and a reader that cannot resolve it treats any purchase as satisfying the rule. Exporters that target pre-1.6 readers should keep requireEntitlement set to the first listed product.",
+               "description":"Since schema 1.6: the products (ids from the host's product catalogue; display info may be given in paywall.products) that unlock a purchase rule. A reader satisfies the rule when they own AT LEAST ONE of the listed products; readers offer one Buy option per listed product. Only meaningful when the rule is a purchase rule (entitlementType/requireEntitlement 'purchase' or a product key); other rule kinds ignore it. When absent, the pre-1.6 behaviour applies: requireEntitlement is the only product hint (a value that is not an entitlement type name names the single product to offer), and a reader that cannot resolve it treats any purchase as satisfying the rule. Exporters that target pre-1.6 readers should keep requireEntitlement set to the first listed product.",
                "items":{
                   "$ref":"#/$defs/Identifier"
                },

@@ -1218,8 +1218,24 @@ export interface PaywallRule {
   targetPanelIds?: Identifier[];
 }
 
+/**
+ * Since schema 1.6: reader-facing info about one product or subscription tier
+ * from the host's catalogue. Rules reference it by `id` (`requiredProductIds`,
+ * a product-key `requireEntitlement`, `subscriptionTiers`). Informational only.
+ */
+export interface PaywallProduct {
+  id: Identifier;
+  name?: LocalizedString;
+  description?: LocalizedString;
+  /** Display price; the host's checkout stays the authority on the charged price. */
+  price?: { amount: number; currency: string };
+  type?: 'purchase' | 'subscription';
+}
+
 export interface Paywall {
   rules?: PaywallRule[];
+  /** Since schema 1.6: display info for the products/tiers the rules reference (ids should be unique). */
+  products?: PaywallProduct[];
 }
 
 // ---------------------------------------------------------------------------
