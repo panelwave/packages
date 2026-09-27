@@ -22,9 +22,14 @@
     "graphic-novel"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/panelwave/packages/tree/master/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/panelwave/packages/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/panelwave/cli"
+    "url": "git+https://github.com/panelwave/packages.git",
+    "directory": "packages/cli"
   },
   "dependencies": {
     "ajv": "^8.17.0",

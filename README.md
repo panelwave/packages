@@ -46,7 +46,7 @@ npm run build:cli
 
 ## Schema
 
-The PanelWave JSON Schema (v1.0) lives in the [`panelwave-schema`](https://bitbucket.org/jenshoppe/panelwave-schema) repository. The schema file is also bundled inside `@panelwave/cli` for offline validation.
+The PanelWave JSON Schema (v1.0) lives in the [`panelwave/schema`](https://github.com/panelwave/schema) repository. The schema file is also bundled inside `@panelwave/cli` for offline validation.
 
 ## License
 
