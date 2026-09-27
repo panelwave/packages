@@ -50,6 +50,14 @@ Every `$defs` entry from [`panelwave.schema.json`](https://panelwave.org/schema/
 - **Paywall / Tracking / UI** — `Paywall`, `PaywallRule`, `Tracking`, `UISettings`, …
 - **Primitives** — `Identifier`, `LocaleCode`, `Uri`, `ColorHex`, `NormalizedNumber`, `LocalizedString`, …
 
+## Links
+
+- **Source:** [github.com/panelwave/packages](https://github.com/panelwave/packages/tree/master/packages/types) ([issues](https://github.com/panelwave/packages/issues))
+- **CLI:** [`@panelwave/cli`](https://www.npmjs.com/package/@panelwave/cli): validate, bundle, diff and upgrade manifests
+- **Player:** [`@panelwave/player`](https://www.npmjs.com/package/@panelwave/player): the open-source Angular player
+- **Format:** [github.com/panelwave/schema](https://github.com/panelwave/schema) (JSON Schema, CC BY 4.0)
+- **Docs:** [docs.panelwave.org](https://docs.panelwave.org)
+
 ## License
 
 MIT

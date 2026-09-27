@@ -70,6 +70,14 @@ panelwave upgrade ./my-comic/panelwave.json -o upgraded.json
 | `0`  | Success / valid / identical       |
 | `1`  | Errors found / differences exist  |
 
+## Links
+
+- **Source:** [github.com/panelwave/packages](https://github.com/panelwave/packages/tree/master/packages/cli) ([issues](https://github.com/panelwave/packages/issues))
+- **Types:** [`@panelwave/types`](https://www.npmjs.com/package/@panelwave/types): TypeScript interfaces for manifests
+- **Player:** [`@panelwave/player`](https://www.npmjs.com/package/@panelwave/player): the open-source Angular player
+- **Format:** [github.com/panelwave/schema](https://github.com/panelwave/schema) (the canonical schema this CLI bundles, CC BY 4.0)
+- **Docs:** [docs.panelwave.org](https://docs.panelwave.org)
+
 ## License
 
 MIT
