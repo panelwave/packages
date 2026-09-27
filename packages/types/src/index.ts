@@ -1,7 +1,7 @@
 /**
- * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.1 manifest format.
+ * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.6 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.1.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.6.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -1198,6 +1198,24 @@ export interface PaywallRule {
   requireEntitlement: string;
   previewPanels?: number;
   ageGate?: number;
+  /** CMS: human-friendly rule name. */
+  name?: string;
+  description?: string;
+  /** CMS entitlement kind (e.g. `purchase`, `subscription`). */
+  entitlementType?: string;
+  subscriptionTiers?: string[];
+  /**
+   * Since schema 1.6: the products (host catalogue ids) that unlock a purchase
+   * rule. Owning AT LEAST ONE satisfies the rule; players offer one Buy option
+   * per listed product. Absent = pre-1.6 behaviour (`requireEntitlement` is the
+   * only product hint). Unique, at least one item.
+   */
+  requiredProductIds?: Identifier[];
+  /** CMS embedded display price. */
+  price?: { amount?: number; currency?: string };
+  minimumAge?: number;
+  previewPanelCount?: number;
+  targetPanelIds?: Identifier[];
 }
 
 export interface Paywall {

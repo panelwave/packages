@@ -13,13 +13,15 @@ interface UpgradeStep {
   action: string;
 }
 
-const LATEST_VERSION = '1.5.0';
+const LATEST_VERSION = '1.6.0';
 const LATEST_SCHEMA_URI = 'https://panelwave.org/schema/1.0/panelwave.schema.json';
 
 /**
  * Apply schema migration steps.
- * Currently only supports normalizing to 1.0.0 since that is the only version.
- * Future versions will add migration logic here.
+ * Every 1.x minor (1.1 … 1.6) is additive, so a manifest from an older minor
+ * (e.g. 1.5 → 1.6) needs no content change: only the version header is
+ * rewritten, plus the legacy draft normalisations below. A future breaking
+ * version adds its migration logic here.
  */
 function applyUpgrades(manifest: Record<string, unknown>): { result: Record<string, unknown>; steps: UpgradeStep[] } {
   const result = JSON.parse(JSON.stringify(manifest)) as Record<string, unknown>;

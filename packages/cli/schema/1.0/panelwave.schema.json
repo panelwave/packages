@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.5.0",
+   "title":"PanelWave Manifest 1.6.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -3920,6 +3920,15 @@
                "items":{
                   "type":"string"
                }
+            },
+            "requiredProductIds":{
+               "type":"array",
+               "description":"Since schema 1.6: the products (ids from the host's product catalogue) that unlock a purchase rule. A reader satisfies the rule when they own AT LEAST ONE of the listed products; readers offer one Buy option per listed product. Only meaningful when the rule is a purchase rule (entitlementType/requireEntitlement 'purchase' or a product key); other rule kinds ignore it. When absent, the pre-1.6 behaviour applies: requireEntitlement is the only product hint (a value that is not an entitlement type name names the single product to offer), and a reader that cannot resolve it treats any purchase as satisfying the rule. Exporters that target pre-1.6 readers should keep requireEntitlement set to the first listed product.",
+               "items":{
+                  "$ref":"#/$defs/Identifier"
+               },
+               "minItems":1,
+               "uniqueItems":true
             },
             "price":{
                "type":"object",
