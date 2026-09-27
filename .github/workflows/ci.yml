@@ -1,0 +1,41 @@
+# CI for @panelwave/types + @panelwave/cli: build both packages, check the
+# bundled schema against the canonical panelwave/schema repo, smoke-test the CLI.
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # scripts/sync-schema.js --check compares against the canonical schema.
+      - uses: actions/checkout@v4
+        with:
+          repository: panelwave/schema
+          path: .schema
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (includes schema drift check)
+        run: npm run build
+        env:
+          PANELWAVE_SCHEMA_DIR: ${{ github.workspace }}/.schema
+
+      - name: CLI smoke test
+        run: node packages/cli/dist/index.js --help
+
+      - name: Pack dry-run
+        run: |
+          npm pack --dry-run --workspace=packages/types
+          npm pack --dry-run --workspace=packages/cli

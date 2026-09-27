@@ -1,0 +1,82 @@
+# Release @panelwave/types or @panelwave/cli: bump the package version, build,
+# publish to npm, tag (<package>-v<version>) and create the GitHub release.
+# Manual trigger only.
+#
+# Publishing uses npm trusted publishing (OIDC): no NPM_TOKEN. Each package has
+# this repo + release.yml registered as its trusted publisher on npmjs.com, so
+# the workflow filename must stay release.yml.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: package to release
+        type: choice
+        options: [types, cli]
+      bump:
+        description: semver bump for packages/<package>/package.json
+        type: choice
+        options: [patch, minor, major, prerelease]
+        default: patch
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        with:
+          repository: panelwave/schema
+          path: .schema
+
+      - uses: actions/setup-node@v4
+        with:
+          # npm >= 11.5.1 is required for trusted publishing; Node 24 ships it.
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (includes schema drift check)
+        run: npm run build
+        env:
+          PANELWAVE_SCHEMA_DIR: ${{ github.workspace }}/.schema
+
+      - name: Bump version
+        id: bump
+        working-directory: packages/${{ inputs.package }}
+        run: |
+          NEW=$(npm version ${{ inputs.bump }} --no-git-tag-version)
+          echo "version=${NEW#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to npm
+        working-directory: packages/${{ inputs.package }}
+        run: npm publish --access public
+
+      - name: Commit + tag
+        run: |
+          TAG="${{ inputs.package }}-v${{ steps.bump.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/${{ inputs.package }}/package.json package-lock.json
+          git commit -m "chore(release): @panelwave/${{ inputs.package }} ${{ steps.bump.outputs.version }}"
+          git tag "$TAG"
+          git push --follow-tags
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: "@panelwave/${{ inputs.package }} ${{ steps.bump.outputs.version }}"
+          generate_release_notes: true

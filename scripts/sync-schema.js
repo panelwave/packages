@@ -54,7 +54,9 @@ for (const major of bundledFiles) {
     console.warn(`sync-schema: canonical schema not found at ${canonicalPath} — skipping copy/diff for ${major}`);
   } else {
     const canonical = fs.readFileSync(canonicalPath, 'utf8');
-    if (canonical !== bundled) {
+    // Compare modulo line endings: a Windows working copy (CRLF) is not drift.
+    const lf = (s) => s.replace(/\r\n/g, '\n');
+    if (lf(canonical) !== lf(bundled)) {
       if (check) {
         console.error(`sync-schema: packages/cli/schema/${major}/panelwave.schema.json drifts from ${canonicalPath}`);
         problems++;
