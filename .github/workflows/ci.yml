@@ -1,5 +1,6 @@
-# CI for @panelwave/types + @panelwave/cli: build both packages, check the
-# bundled schema against the canonical panelwave/schema repo, smoke-test the CLI.
+# CI for @panelwave/types, @panelwave/cli and @panelwave/mcp: build all packages,
+# check the bundled schema against the canonical panelwave/schema repo, run the
+# tests, smoke-test both binaries.
 name: ci
 
 on:
@@ -32,10 +33,20 @@ jobs:
         env:
           PANELWAVE_SCHEMA_DIR: ${{ github.workspace }}/.schema
 
+      - name: Tests
+        run: npm test
+
       - name: CLI smoke test
         run: node packages/cli/dist/index.js --help
+
+      - name: MCP bridge smoke test
+        run: |
+          node packages/mcp/dist/index.js --version
+          # without a token the bridge must refuse to start
+          if PANELWAVE_TOKEN= node packages/mcp/dist/index.js < /dev/null; then echo "bridge started without a token" && exit 1; fi
 
       - name: Pack dry-run
         run: |
           npm pack --dry-run --workspace=packages/types
           npm pack --dry-run --workspace=packages/cli
+          npm pack --dry-run --workspace=packages/mcp
