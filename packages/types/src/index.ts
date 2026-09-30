@@ -1046,11 +1046,58 @@ export interface AccessibilityHints {
 // Panel animations
 // ---------------------------------------------------------------------------
 
+/**
+ * Layer property a keyframe animates (schema 1.6+).
+ *
+ * - `opacity`: 0-1, replaces the layer's opacity
+ * - `transform.x` / `transform.y`: offset from the layer's resting position as a
+ *   fraction of the panel's width / height (0.1 = 10 % right / down)
+ * - `transform.scale`: scale factor around the layer's center (1 = unchanged)
+ * - `transform.rotation`: degrees clockwise around the layer's center
+ * - `blur`: blur radius in px at a panel width of 1024 px (scaled with the rendered panel)
+ * - `brightness` / `contrast` / `saturate`: multiplier (1 = unchanged)
+ */
+export type AnimatableProperty =
+  | 'opacity'
+  | 'transform.x'
+  | 'transform.y'
+  | 'transform.scale'
+  | 'transform.rotation'
+  | 'blur'
+  | 'brightness'
+  | 'contrast'
+  | 'saturate';
+
+/** One keyframe of a layer animation (schema 1.6+). */
+export interface AnimationKeyframe {
+  id?: Identifier;
+  /** Id of the animated layer (`Panel.layers[].id`). */
+  layerId: Identifier;
+  property: AnimatableProperty;
+  /** Position on the animation's timeline in milliseconds (0-120000). */
+  timeMs: number;
+  value: number;
+  /** Easing applied from this keyframe to the next one of the same track. Default `linear`. */
+  easing?: Easing;
+}
+
 export interface PanelAnimations {
+  /** Human-friendly animation name (authoring aid). */
+  name?: string;
   startViewportRect?: NormalizedRect;
   endViewportRect?: NormalizedRect;
+  /** Total running time; when omitted, keyframes run until their last keyframe. */
   durationMs?: number;
+  /** Easing of the camera move; keyframes carry their own easing. */
   easing?: Easing;
+  /** Restart from 0 when durationMs is reached (schema 1.6+). Default false. */
+  loop?: boolean;
+  /**
+   * Layer keyframes (schema 1.6+). Keyframes with the same layerId + property
+   * form one track; values hold before the first / after the last keyframe and
+   * are interpolated in between with the earlier keyframe's easing.
+   */
+  keyframes?: AnimationKeyframe[];
 }
 
 export interface PanelFormatView {
@@ -1170,13 +1217,21 @@ export interface ExtraBlock {
   requiredTier?: string;
 }
 
+/**
+ * A character sheet names its character(s) with `characterId`, `characterIds`
+ * (ensemble sheet, schema 1.6+) or both — at least one is required. When
+ * `characterIds` is present it is the authoritative list and `characterId`
+ * should equal its first entry.
+ */
 export interface ExtraCharacterSheet extends ExtraBlock {
-  characterId: Identifier;
+  characterId?: Identifier;
+  characterIds?: Identifier[];
 }
 
 export interface Extras {
   cover?: ExtraBlock;
-  alt_cover?: ExtraBlock;
+  /** One alternative cover, or several (array form, schema 1.6+). */
+  alt_cover?: ExtraBlock | ExtraBlock[];
   character_sheets?: ExtraCharacterSheet[];
   author_info?: ExtraBlock;
   author_interviews?: ExtraBlock[];

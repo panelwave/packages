@@ -2367,7 +2367,12 @@
       "PanelAnimations":{
          "type":"object",
          "additionalProperties":false,
+         "description":"Animation of one panel: an optional camera move (startViewportRect -> endViewportRect) and/or layer keyframes. Both share durationMs. The animation starts when the panel is shown (panel view: it becomes the current panel; page and canvas view: it scrolls into view).",
          "properties":{
+            "name":{
+               "type":"string",
+               "description":"Human-friendly animation name (authoring aid). Players ignore it."
+            },
             "startViewportRect":{
                "$ref":"#/$defs/NormalizedRect"
             },
@@ -2377,7 +2382,8 @@
             "durationMs":{
                "type":"integer",
                "minimum":0,
-               "maximum":120000
+               "maximum":120000,
+               "description":"Total running time. When omitted, keyframe animations run until their last keyframe."
             },
             "easing":{
                "type":"string",
@@ -2387,7 +2393,76 @@
                   "ease-in",
                   "ease-out",
                   "ease-in-out"
-               ]
+               ],
+               "description":"Easing of the camera move. Keyframes carry their own easing."
+            },
+            "loop":{
+               "type":"boolean",
+               "default":false,
+               "description":"Restart the animation from 0 when durationMs is reached. When false, the end state holds."
+            },
+            "keyframes":{
+               "type":"array",
+               "maxItems":2000,
+               "items":{
+                  "$ref":"#/$defs/AnimationKeyframe"
+               },
+               "description":"Layer keyframes. All keyframes with the same layerId and property form one track, ordered by timeMs. Before a track's first keyframe its first value holds, after its last keyframe its last value holds; between two keyframes the value is interpolated using the easing of the earlier one. Keyframes whose layerId matches no layer of the panel are ignored. With a reduced-motion preference players skip the motion and show the end state."
+            }
+         }
+      },
+      "AnimationKeyframe":{
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "layerId",
+            "property",
+            "timeMs",
+            "value"
+         ],
+         "properties":{
+            "id":{
+               "$ref":"#/$defs/Identifier"
+            },
+            "layerId":{
+               "$ref":"#/$defs/Identifier",
+               "description":"Id of the animated layer (Panel.layers[].id)."
+            },
+            "property":{
+               "type":"string",
+               "enum":[
+                  "opacity",
+                  "transform.x",
+                  "transform.y",
+                  "transform.scale",
+                  "transform.rotation",
+                  "blur",
+                  "brightness",
+                  "contrast",
+                  "saturate"
+               ],
+               "description":"Animated property. opacity: 0-1, replaces the layer's opacity. transform.x / transform.y: offset from the layer's resting position as a fraction of the panel's width / height (0.1 = 10 % to the right / down, negative = left / up). transform.scale: scale factor around the layer's center (1 = unchanged). transform.rotation: degrees clockwise around the layer's center. blur: blur radius in px at a panel width of 1024 px (players scale it with the rendered panel width). brightness / contrast / saturate: multiplier (1 = unchanged)."
+            },
+            "timeMs":{
+               "type":"integer",
+               "minimum":0,
+               "maximum":120000,
+               "description":"Position of the keyframe on the animation's timeline."
+            },
+            "value":{
+               "type":"number"
+            },
+            "easing":{
+               "type":"string",
+               "enum":[
+                  "linear",
+                  "ease",
+                  "ease-in",
+                  "ease-out",
+                  "ease-in-out"
+               ],
+               "default":"linear",
+               "description":"Easing applied from this keyframe to the next one of the same track."
             }
          }
       },
@@ -3708,7 +3783,20 @@
                "$ref":"#/$defs/ExtraBlock"
             },
             "alt_cover":{
-               "$ref":"#/$defs/ExtraBlock"
+               "description":"One alternative cover (an ExtraBlock) or several (an array of ExtraBlocks, in display order). Exporters emit the single-object form when there is exactly one.",
+               "oneOf":[
+                  {
+                     "$ref":"#/$defs/ExtraBlock"
+                  },
+                  {
+                     "type":"array",
+                     "minItems":1,
+                     "items":{
+                        "$ref":"#/$defs/ExtraBlock"
+                     },
+                     "uniqueItems":true
+                  }
+               ]
             },
             "character_sheets":{
                "type":"array",
@@ -3844,12 +3932,31 @@
             },
             {
                "type":"object",
-               "required":[
-                  "characterId"
+               "anyOf":[
+                  {
+                     "required":[
+                        "characterId"
+                     ]
+                  },
+                  {
+                     "required":[
+                        "characterIds"
+                     ]
+                  }
                ],
                "properties":{
                   "characterId":{
-                     "$ref":"#/$defs/Identifier"
+                     "$ref":"#/$defs/Identifier",
+                     "description":"The character this sheet shows. For an ensemble sheet, the first entry of characterIds (kept so that consumers that only know characterId still resolve a character)."
+                  },
+                  "characterIds":{
+                     "type":"array",
+                     "minItems":1,
+                     "items":{
+                        "$ref":"#/$defs/Identifier"
+                     },
+                     "uniqueItems":true,
+                     "description":"All characters shown on this sheet (ensemble / cast sheet), in display order. When present it is the authoritative list; characterId, if also present, should equal its first entry."
                   }
                }
             }
