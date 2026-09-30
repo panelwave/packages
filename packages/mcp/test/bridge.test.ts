@@ -54,6 +54,21 @@ describe('bridge over an in-memory remote', () => {
     expect(local.annotations).toMatchObject({ readOnlyHint: true });
   });
 
+  it('offers no local tools when no folder is allowed', async () => {
+    const remote2 = inMemoryRemote();
+    const proxy2 = new RemoteProxy({ url: 'https://mcp.test.local/mcp', token: 't', version: 'test', transportFactory: remote2.factory, log: quiet });
+    const bare = await startBridge({ ...testConfig(), allowedDirs: [] }, { remote: proxy2, log: quiet });
+    const c = await connectClient(bare.server, () => undefined);
+    try {
+      const names = (await c.listTools()).tools.map((t) => t.name);
+      expect(names.some((n) => n.startsWith('pw_local_'))).toBe(false);
+      expect(names.length).toBeGreaterThan(0);
+    } finally {
+      await c.close();
+      await bare.close();
+    }
+  });
+
   it('passes the remote instructions through and appends the local note', () => {
     const instructions = client.getInstructions() ?? '';
     expect(instructions.startsWith(REMOTE_INSTRUCTIONS)).toBe(true);

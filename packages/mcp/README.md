@@ -101,7 +101,7 @@ The assistant asks before destructive steps such as deleting pages or panels.
 |----------|---------|---------|
 | `PANELWAVE_TOKEN` | *(required)* | Personal access token. The bridge refuses to start without it. |
 | `PANELWAVE_MCP_URL` | `https://mcp.panelwave.org/mcp` | Hosted endpoint. Plain `http` is accepted only for `localhost`. |
-| `PANELWAVE_ALLOWED_DIRS` | the working directory | Folders the local tools may read, separated by `;` on Windows and `:` on macOS/Linux. |
+| `PANELWAVE_ALLOWED_DIRS` | *(none — local tools off)* | Folders the local tools may read, separated by `;` on Windows and `:` on macOS/Linux. Without it the bridge only mirrors the hosted tools. A drive root or your whole home folder is refused. |
 
 `panelwave-mcp --version` prints the version and `--help` a short usage. The bridge writes diagnostics to stderr, and your client shows them in its MCP log.
 
@@ -113,7 +113,9 @@ The assistant asks before destructive steps such as deleting pages or panels.
 | `pw_local_read_text` | Reads a UTF-8 text file such as a script, `.fountain` screenplay or outline. Files over 1 MiB are cut and flagged `truncated`; `maxBytes` goes up to 5 MiB. Binary files are refused. |
 | `pw_local_upload_files` | Uploads images, videos, audio and fonts into a work's asset library, from a folder with an optional glob or from a list of paths. See below. |
 
-Every path is resolved, with symlinks followed, and must stay inside `PANELWAVE_ALLOWED_DIRS`. Anything else fails with `INVALID_INPUT`. Relative paths are taken from the first allowed folder. Hidden files and `node_modules` are skipped unless you ask for them. The list and read tools never change anything.
+Every path is resolved, with symlinks followed, and must stay inside `PANELWAVE_ALLOWED_DIRS`. Anything else fails with `INVALID_INPUT`. The check runs on the path text before the filesystem is touched, and network paths (`\\server\share`) are refused, so a path can never make Windows connect to another machine. Relative paths are taken from the first allowed folder. Hidden files and `node_modules` are skipped in listings unless you ask for them, and `pw_local_read_text` never reads hidden files or folders such as `.ssh` or `.env`. The list and read tools never change anything.
+
+Uploads go only to the https storage URLs the hosted server signs (plain http only on localhost, for development), and the bridge never sends its token or cookies there.
 
 ### How uploads work
 

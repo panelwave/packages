@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { sha256File, uploadBatch, uploadFiles, type UploadRow } from '../src/upload';
+import { assertUploadTarget, safeUploadHeaders, sha256File, uploadBatch, uploadFiles, type UploadRow } from '../src/upload';
 import type { LocalToolContext } from '../src/tool';
 import { FakeGateway, MockS3 } from './helpers/fake-gateway';
 import { jpegBytes, pngBytes } from './helpers/images';
@@ -73,6 +73,17 @@ beforeEach(() => {
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
 
 describe('pw_local_upload_files — single uploads', () => {
+  it('uploads only to https or loopback http, and never forwards credential headers', () => {
+    expect(assertUploadTarget('https://fsn1.your-objectstorage.com/b/k?X-Amz-Signature=1')).toContain('https://');
+    expect(assertUploadTarget('http://localhost:9000/b/k')).toContain('localhost');
+    expect(assertUploadTarget('http://127.0.0.1:9000/b/k')).toContain('127.0.0.1');
+    for (const bad of ['http://192.168.1.10/upload', 'http://intranet.example/x', 'file:///etc/passwd', 'ftp://x/y', 'https://user:pw@s3.example/x', 'not a url']) {
+      expect(() => assertUploadTarget(bad)).toThrow();
+    }
+    expect(safeUploadHeaders({ 'Content-Type': 'image/png', Authorization: 'Bearer x', cookie: 'a=b', Host: 'evil', 'x-amz-acl': 'private' }))
+      .toEqual({ 'Content-Type': 'image/png', 'x-amz-acl': 'private' });
+  });
+
   it('hashes, reads EXIF-corrected dimensions, PUTs with the signed headers and registers every file', async () => {
     const files = {
       'panels/panel-10.png': png(1024, 1536, 0, 10),

@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 /** Package version — package.json sits one level above both src/ and dist/. */
@@ -51,6 +52,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.c
     .split(path.delimiter)
     .map((d) => d.trim())
     .filter(Boolean);
-  const allowedDirs = (dirs.length ? dirs : [cwd]).map((d) => path.resolve(cwd, d));
+  // No default folder: without PANELWAVE_ALLOWED_DIRS the local tools are off. Clients often start stdio
+  // servers in the home folder or "/", which would expose everything (security review 2026-09-30).
+  const allowedDirs = dirs.map((d) => path.resolve(cwd, d));
+  const home = path.resolve(os.homedir());
+  const same = (a: string, b: string) => (process.platform === 'win32' || process.platform === 'darwin' ? a.toLowerCase() === b.toLowerCase() : a === b);
+  for (const d of allowedDirs) {
+    if (path.parse(d).root === d || same(d.replace(/[\\/]+$/, ''), home)) {
+      throw new ConfigError(`PANELWAVE_ALLOWED_DIRS must name the folders with your comics, not a drive root or your whole home folder (${d}).`);
+    }
+  }
   return { url: parsed.toString(), token, allowedDirs, version };
 }

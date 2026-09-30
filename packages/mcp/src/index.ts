@@ -46,7 +46,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     return;
   }
   const config = loadConfig();
-  log(`v${version} → ${config.url}; local folders: ${config.allowedDirs.join(', ')}`);
+  log(
+    config.allowedDirs.length
+      ? `v${version} → ${config.url}; local folders: ${config.allowedDirs.join(', ')}`
+      : `v${version} → ${config.url}; local file tools are OFF — set PANELWAVE_ALLOWED_DIRS to the folder with your scripts and artwork to use them`,
+  );
   const bridge = await startBridge(config, { log });
 
   let closing = false;

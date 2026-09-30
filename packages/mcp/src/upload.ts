@@ -102,6 +102,8 @@ export interface UploadOptions {
   /** Monotonic byte progress over the whole batch. */
   onProgress?: (doneBytes: number, totalBytes: number, message: string) => void;
   fetch?: typeof fetch;
+  /** Tests only: allow plain-http upload hosts beyond loopback. */
+  allowInsecureUploadHosts?: boolean;
   /** Base backoff between attempts (tripled per attempt). Default 500 ms. */
   retryDelayMs?: number;
 }
@@ -140,7 +142,9 @@ async function putWithRetry(
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     if (opts.signal?.aborted) throw new BridgeError('CANCELLED', 'The call was cancelled.');
     // signing (a hosted tool call) and reading the file are not retried here
-    const { url, headers } = await target(attempt, lastStatus);
+    const next = await target(attempt, lastStatus);
+    const url = assertUploadTarget(next.url, opts);
+    const headers = safeUploadHeaders(next.headers);
     const bytes = await body();
     let res: Response | undefined;
     try {
@@ -156,13 +160,43 @@ async function putWithRetry(
     }
     if (res) {
       lastStatus = res.status;
-      const snippet = (await res.text().catch(() => '')).replace(/s+/g, ' ').slice(0, 200);
+      const snippet = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 200);
       last = new BridgeError('UPSTREAM_UNAVAILABLE', `Storage refused ${label} (HTTP ${res.status}${snippet ? `: ${snippet}` : ''}).`);
       if (!RETRYABLE_STATUS.has(res.status)) throw last;
     }
     if (attempt < MAX_ATTEMPTS) await sleep((opts.retryDelayMs ?? 500) * 3 ** (attempt - 1), opts.signal);
   }
   throw new BridgeError('UPSTREAM_UNAVAILABLE', `${last?.message ?? `Uploading ${label} failed.`} Gave up after ${MAX_ATTEMPTS} attempts — run the tool again to resume (finished files are skipped).`);
+}
+
+/**
+ * Upload URLs come from the hosted server. Accept only https, or plain http to a
+ * loopback host (a local MinIO in development) — never another scheme or a
+ * plain-http host on the network (security review 2026-09-30).
+ */
+export function assertUploadTarget(url: string, opts: Pick<UploadOptions, 'allowInsecureUploadHosts'> = {}): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new BridgeError('UPSTREAM_UNAVAILABLE', 'The server returned an invalid upload URL.');
+  }
+  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+  const ok = parsed.protocol === 'https:' || (parsed.protocol === 'http:' && (loopback || opts.allowInsecureUploadHosts === true));
+  if (!ok || parsed.username || parsed.password) {
+    throw new BridgeError('PRECONDITION_FAILED', `Refusing to upload to ${parsed.protocol}//${parsed.host}: uploads go to https storage only.`);
+  }
+  return parsed.toString();
+}
+
+/** Headers for the storage PUT: never credentials or hop-by-hop headers, whatever the server suggests. */
+export function safeUploadHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(headers ?? {})) {
+    if (/^(authorization|proxy-authorization|cookie|host|connection|transfer-encoding|content-length)$/i.test(k)) continue;
+    if (typeof v === 'string') out[k] = v;
+  }
+  return out;
 }
 
 /**

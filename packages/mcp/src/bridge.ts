@@ -45,9 +45,10 @@ function asProtocolError(e: unknown): ProtocolError {
 export function createBridgeServer(opts: BridgeOptions): Server {
   const { config, remote } = opts;
   const log = opts.log ?? (() => undefined);
-  const localTools = opts.localTools ?? LOCAL_TOOLS;
+  // The local tools exist only when folders were allowed explicitly (PANELWAVE_ALLOWED_DIRS).
+  const localTools = opts.localTools ?? (config.allowedDirs.length ? LOCAL_TOOLS : []);
   const localByName = new Map(localTools.map((t) => [t.name, t]));
-  const instructions = [remote.instructions, LOCAL_INSTRUCTIONS].filter(Boolean).join('\n\n');
+  const instructions = [remote.instructions, localTools.length ? LOCAL_INSTRUCTIONS : ''].filter(Boolean).join('\n\n');
 
   const server = new Server(
     { name: 'panelwave', title: 'PanelWave', version: config.version },

@@ -131,7 +131,8 @@ export const readText = defineLocalTool({
   input: readTextInput,
   output: readTextOutput,
   async run(args, ctx) {
-    const file = resolveAllowed(args.path, ctx.allowedDirs);
+    // No dotfiles or dot-folders (.ssh, .env, .git …): scripts never live there, secrets often do.
+    const file = resolveAllowed(args.path, ctx.allowedDirs, { allowHidden: false });
     const stat = await fs.stat(file).catch((e) => {
       throw toBridgeError(e);
     });

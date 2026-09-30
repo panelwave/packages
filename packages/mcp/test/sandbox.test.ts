@@ -48,6 +48,33 @@ describe('resolveAllowed', () => {
     expect(code(() => resolveAllowed('a\0b', [allowed]))).toBe('INVALID_INPUT');
   });
 
+  it('refuses hidden files and folders when asked (pw_local_read_text)', () => {
+    fs.mkdirSync(path.join(allowed, '.ssh'), { recursive: true });
+    fs.writeFileSync(path.join(allowed, '.ssh', 'id_ed25519'), 'key');
+    fs.writeFileSync(path.join(allowed, '.env'), 'SECRET=1');
+    expect(code(() => resolveAllowed('.ssh/id_ed25519', [allowed], { allowHidden: false }))).toBe('INVALID_INPUT');
+    expect(code(() => resolveAllowed('.env', [allowed], { allowHidden: false }))).toBe('INVALID_INPUT');
+    expect(resolveAllowed('art/p1.png', [allowed], { allowHidden: false })).toBe(path.join(allowed, 'art', 'p1.png'));
+    // the default (listing, uploads) still resolves them
+    expect(resolveAllowed('.env', [allowed])).toBe(path.join(allowed, '.env'));
+  });
+
+  it('refuses without any allowed folder', () => {
+    expect(code(() => resolveAllowed('art/p1.png', []))).toBe('PRECONDITION_FAILED');
+  });
+
+  (process.platform === 'win32' ? it : it.skip)('refuses UNC and device paths before touching the filesystem (no SMB connection)', () => {
+    const spy = jest.spyOn(fs.realpathSync, 'native');
+    try {
+      for (const p of ['//attacker.example/share/x', '\\\\attacker.example\\share\\x', '\\\\?\\C:\\Windows\\win.ini', '\\\\.\\pipe\\x']) {
+        expect(code(() => resolveAllowed(p, [allowed]))).toBe('INVALID_INPUT');
+      }
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('the error names the allowed folders and the env variable', () => {
     expect(() => resolveAllowed(outside, [allowed])).toThrow(/PANELWAVE_ALLOWED_DIRS/);
   });

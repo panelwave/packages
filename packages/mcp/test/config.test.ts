@@ -1,3 +1,4 @@
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { ConfigError, DEFAULT_URL, loadConfig, version } from '../src/config';
 
@@ -9,11 +10,11 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ PANELWAVE_TOKEN: '   ' }, cwd)).toThrow(/PANELWAVE_TOKEN is not set.*personal access token/);
   });
 
-  it('defaults the endpoint to the hosted server and the allowed folder to the working directory', () => {
+  it('defaults the endpoint to the hosted server and allows no local folder unless configured', () => {
     const c = loadConfig({ PANELWAVE_TOKEN: 'pw_pat_x' }, cwd);
     expect(c.url).toBe(DEFAULT_URL);
     expect(c.token).toBe('pw_pat_x');
-    expect(c.allowedDirs).toEqual([cwd]);
+    expect(c.allowedDirs).toEqual([]);
     expect(c.version).toBe(version);
     expect(version).toMatch(/^\d+\.\d+\.\d+/);
   });
@@ -21,6 +22,12 @@ describe('loadConfig', () => {
   it('splits PANELWAVE_ALLOWED_DIRS on the platform delimiter and resolves relative entries', () => {
     const env = { PANELWAVE_TOKEN: 't', PANELWAVE_ALLOWED_DIRS: ['art', '', path.resolve('/scripts')].join(path.delimiter) };
     expect(loadConfig(env, cwd).allowedDirs).toEqual([path.join(cwd, 'art'), path.resolve('/scripts')]);
+  });
+
+  it('refuses a drive root or the whole home folder as an allowed folder', () => {
+    expect(() => loadConfig({ PANELWAVE_TOKEN: 't', PANELWAVE_ALLOWED_DIRS: path.parse(cwd).root }, cwd)).toThrow(/drive root or your whole home folder/);
+    expect(() => loadConfig({ PANELWAVE_TOKEN: 't', PANELWAVE_ALLOWED_DIRS: os.homedir() }, cwd)).toThrow(/home folder/);
+    expect(loadConfig({ PANELWAVE_TOKEN: 't', PANELWAVE_ALLOWED_DIRS: path.join(os.homedir(), 'comics') }, cwd).allowedDirs).toEqual([path.join(os.homedir(), 'comics')]);
   });
 
   it('accepts https anywhere and plain http only for localhost', () => {
