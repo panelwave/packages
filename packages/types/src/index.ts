@@ -1084,9 +1084,18 @@ export interface AnimationKeyframe {
 export interface PanelAnimations {
   /** Human-friendly animation name (authoring aid). */
   name?: string;
+  /**
+   * Camera move: the part of the panel shown when the animation starts
+   * (normalized to the panel box). Omitted = the whole panel.
+   */
   startViewportRect?: NormalizedRect;
+  /**
+   * Camera move: the part of the panel shown when the animation ends. Omitted
+   * = the whole panel. Players fit the rect with a uniform scale and move
+   * layers, hotspots and speech bubbles together.
+   */
   endViewportRect?: NormalizedRect;
-  /** Total running time; when omitted, keyframes run until their last keyframe. */
+  /** Total running time of the camera move and the keyframes; when omitted, keyframes run until their last keyframe. */
   durationMs?: number;
   /** Easing of the camera move; keyframes carry their own easing. */
   easing?: Easing;

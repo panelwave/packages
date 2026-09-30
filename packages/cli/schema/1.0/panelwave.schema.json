@@ -2374,16 +2374,18 @@
                "description":"Human-friendly animation name (authoring aid). Players ignore it."
             },
             "startViewportRect":{
-               "$ref":"#/$defs/NormalizedRect"
+               "$ref":"#/$defs/NormalizedRect",
+               "description":"Camera move: the part of the panel shown when the animation starts, normalized to the panel box. When omitted (and endViewportRect is set) the move starts on the whole panel."
             },
             "endViewportRect":{
-               "$ref":"#/$defs/NormalizedRect"
+               "$ref":"#/$defs/NormalizedRect",
+               "description":"Camera move: the part of the panel shown when the animation ends. When omitted (and startViewportRect is set) the move ends on the whole panel. Players fit the rect into the panel box with a uniform scale (the artwork is never stretched) and move everything anchored to the artwork - layers, hotspots, speech bubbles - together. Without durationMs the end rect is shown as a static framing."
             },
             "durationMs":{
                "type":"integer",
                "minimum":0,
                "maximum":120000,
-               "description":"Total running time. When omitted, keyframe animations run until their last keyframe."
+               "description":"Total running time of the camera move and the keyframes. When omitted, keyframe animations run until their last keyframe."
             },
             "easing":{
                "type":"string",
