@@ -47,8 +47,8 @@ describe('bridge over an in-memory remote', () => {
   it('lists local tools first, then every remote tool with name and schemas untouched', async () => {
     const { tools } = await client.listTools();
     const remoteTools = (await direct.listTools()).tools;
-    expect(tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', ...remoteTools.map((t) => t.name)]);
-    expect(tools.slice(2)).toEqual(remoteTools);
+    expect(tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', 'pw_local_upload_files', ...remoteTools.map((t) => t.name)]);
+    expect(tools.slice(3)).toEqual(remoteTools);
     const local = tools[0];
     expect(local.inputSchema).toMatchObject({ type: 'object', required: ['folder'] });
     expect(local.annotations).toMatchObject({ readOnlyHint: true });
@@ -127,6 +127,38 @@ describe('bridge over an in-memory remote', () => {
     expect(outside.structuredContent).toMatchObject({ code: 'INVALID_INPUT' });
   });
 
+  it('wires pw_local_upload_files to the remote tools (a missing upload tool → PERMISSION_DENIED with the scope)', async () => {
+    const r = await client.callTool({ name: 'pw_local_upload_files', arguments: { workId: 'w1', paths: ['package.json'], skipDuplicates: true } });
+    // package.json is not media: the row fails locally without touching the remote
+    expect(r.isError).toBeFalsy();
+    expect((r.structuredContent as { files: Array<{ error?: { code: string } }> }).files[0].error?.code).toBe('INVALID_INPUT');
+
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-bridge-up-'));
+    try {
+      fs.writeFileSync(path.join(dir, 'p.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]));
+      const scoped = await startBridge(testConfig([dir]), {
+        remote: new RemoteProxy({ url: 'https://mcp.test.local/mcp', token: 't', version: 'test', transportFactory: inMemoryRemote().factory, log: quiet }),
+        log: quiet,
+      });
+      const c = await connectClient(scoped.server);
+      try {
+        const up = await c.callTool({ name: 'pw_local_upload_files', arguments: { workId: 'w1', paths: ['p.png'] } });
+        const row = (up.structuredContent as { files: Array<{ ok: boolean; error?: { code: string; message: string } }> }).files[0];
+        expect(row.ok).toBe(false);
+        expect(row.error?.code).toBe('PERMISSION_DENIED');
+        expect(row.error?.message).toMatch(/assets:write/);
+      } finally {
+        await c.close();
+        await scoped.close();
+      }
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('re-announces the tool list when the remote signals list_changed', async () => {
     await client.listTools();
     const live = remote.servers[remote.servers.length - 1];
@@ -177,7 +209,7 @@ describe('bridge when the remote is unavailable', () => {
     });
     const client = await connectClient(bridge.server, () => changed++);
     try {
-      expect((await client.listTools()).tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text']);
+      expect((await client.listTools()).tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', 'pw_local_upload_files']);
       const r = await client.callTool({ name: 'pw_meta_whoami', arguments: {} });
       expect(r.isError).toBe(true);
       expect(r.structuredContent).toMatchObject({ code: 'UPSTREAM_UNAVAILABLE' });

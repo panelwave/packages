@@ -2,83 +2,13 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { z } from 'zod';
 import { BridgeError, toBridgeError } from './errors';
-import { decodeUtf8, imageDimensions, kindOfMime, looksBinary, matchesGlob, mimeOf, naturalCompare, readHead, type FileKind } from './files';
+import { decodeUtf8, imageDimensions, kindOfMime, looksBinary, mimeOf, readHead, scanFolder, type FileKind } from './files';
 import { resolveAllowed } from './sandbox';
+import { defineLocalTool, formatBytes, mapLimit, type LocalTool } from './tool';
+import { uploadFiles } from './upload';
 
-/** A CallToolResult as the bridge produces it (text summary + structured data). */
-export interface LocalToolResult {
-  [key: string]: unknown;
-  content: Array<{ type: 'text'; text: string }>;
-  structuredContent?: Record<string, unknown>;
-  isError?: boolean;
-}
-
-export interface LocalToolContext {
-  allowedDirs: string[];
-  signal?: AbortSignal;
-  /** Progress reporter — a no-op when the client did not ask for progress. */
-  progress?: (progress: number, total?: number, message?: string) => Promise<void>;
-}
-
-export interface LocalTool {
-  name: string;
-  title: string;
-  description: string;
-  inputSchema: Record<string, unknown>;
-  outputSchema?: Record<string, unknown>;
-  annotations: Record<string, unknown>;
-  call(args: unknown, ctx: LocalToolContext): Promise<LocalToolResult>;
-}
-
-const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
-
-function jsonSchema(schema: z.ZodType, io: 'input' | 'output'): Record<string, unknown> {
-  const s = z.toJSONSchema(schema, { io, unrepresentable: 'any' }) as Record<string, unknown>;
-  delete s.$schema;
-  return s;
-}
-
-export function errorResult(e: unknown): LocalToolResult {
-  const err = toBridgeError(e);
-  const body: Record<string, unknown> = { code: err.code, message: err.message };
-  if (err.details !== undefined) body.details = err.details;
-  return { isError: true, content: [{ type: 'text', text: `${err.code}: ${err.message}` }], structuredContent: body };
-}
-
-function parseArgs<T extends z.ZodType>(schema: T, args: unknown): z.output<T> {
-  const parsed = schema.safeParse(args ?? {});
-  if (parsed.success) return parsed.data;
-  const issues = parsed.error.issues.slice(0, 10).map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`);
-  throw new BridgeError('INVALID_INPUT', `Invalid arguments — ${issues.join('; ')}`, { issues });
-}
-
-/** Define a local tool: zod input/output, JSON Schemas derived, errors mapped to isError results. */
-function defineLocalTool<I extends z.ZodType, O extends z.ZodType>(def: {
-  name: string;
-  title: string;
-  description: string;
-  input: I;
-  output: O;
-  annotations?: Record<string, unknown>;
-  run(args: z.output<I>, ctx: LocalToolContext): Promise<{ text: string; data: z.input<O> }>;
-}): LocalTool {
-  return {
-    name: def.name,
-    title: def.title,
-    description: def.description,
-    inputSchema: jsonSchema(def.input, 'input'),
-    outputSchema: jsonSchema(def.output, 'output'),
-    annotations: { title: def.title, ...(def.annotations ?? READ_ONLY) },
-    async call(args, ctx) {
-      try {
-        const out = await def.run(parseArgs(def.input, args), ctx);
-        return { content: [{ type: 'text', text: out.text }], structuredContent: out.data as Record<string, unknown> };
-      } catch (e) {
-        return errorResult(e);
-      }
-    },
-  };
-}
+export type { LocalTool, LocalToolContext, LocalToolResult } from './tool';
+export { errorResult } from './tool';
 
 // ---------------------------------------------------------------------------
 // pw_local_list_files
@@ -86,9 +16,6 @@ function defineLocalTool<I extends z.ZodType, O extends z.ZodType>(def: {
 
 export const LIST_LIMIT_DEFAULT = 1000;
 export const LIST_LIMIT_MAX = 5000;
-const MAX_DEPTH = 12;
-const SKIP_DIRS = new Set(['node_modules', '.git', '.svn', '.hg', '__MACOSX', '$RECYCLE.BIN', 'System Volume Information']);
-
 const zFileKind = z.enum(['image', 'video', 'audio', 'font', 'text', 'other']);
 
 const zLocalFile = z.object({
@@ -125,26 +52,6 @@ const listFilesOutput = z.object({
   skipped: z.array(z.string()).describe('Entries that could not be read or point outside the allowed folders.'),
 });
 
-function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
-  return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
-}
-
-async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const out: R[] = new Array(items.length);
-  let next = 0;
-  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
-      const i = next++;
-      out[i] = await fn(items[i]);
-    }
-  });
-  await Promise.all(workers);
-  return out;
-}
-
 export const listFiles = defineLocalTool({
   name: 'pw_local_list_files',
   title: 'List local files',
@@ -153,65 +60,13 @@ export const listFiles = defineLocalTool({
   input: listFilesInput,
   output: listFilesOutput,
   async run(args, ctx) {
-    const root = resolveAllowed(args.folder, ctx.allowedDirs);
-    const stat = await fs.stat(root).catch((e) => {
-      throw toBridgeError(e);
+    const { root, found, skipped, truncated } = await scanFolder(args.folder, ctx.allowedDirs, {
+      glob: args.glob,
+      recursive: args.recursive,
+      includeHidden: args.includeHidden,
+      limit: args.limit,
+      signal: ctx.signal,
     });
-    if (!stat.isDirectory()) throw new BridgeError('INVALID_INPUT', `${args.folder} is a file, not a folder. Use pw_local_read_text to read it.`);
-
-    const found: Array<{ abs: string; rel: string; size: number; mtime: Date }> = [];
-    const skipped: string[] = [];
-    let truncated = false;
-
-    const walk = async (dir: string, rel: string, depth: number): Promise<void> => {
-      if (truncated) return;
-      ctx.signal?.throwIfAborted();
-      let entries: import('node:fs').Dirent[];
-      try {
-        entries = await fs.readdir(dir, { withFileTypes: true });
-      } catch {
-        skipped.push(rel || '.');
-        return;
-      }
-      entries.sort((a, b) => naturalCompare(a.name, b.name));
-      const subdirs: Array<{ abs: string; rel: string }> = [];
-      for (const entry of entries) {
-        if (!args.includeHidden && entry.name.startsWith('.')) continue;
-        const abs = path.join(dir, entry.name);
-        const relPath = rel ? `${rel}/${entry.name}` : entry.name;
-        let isDir = entry.isDirectory();
-        let isFile = entry.isFile();
-        let target = abs;
-        if (entry.isSymbolicLink()) {
-          try {
-            target = resolveAllowed(abs, ctx.allowedDirs);
-            const s = await fs.stat(target);
-            isDir = s.isDirectory();
-            isFile = s.isFile();
-          } catch {
-            skipped.push(relPath);
-            continue;
-          }
-        }
-        if (isDir) {
-          if (args.recursive && depth < MAX_DEPTH && !SKIP_DIRS.has(entry.name)) subdirs.push({ abs: target, rel: relPath });
-          continue;
-        }
-        if (!isFile || !matchesGlob(entry.name, args.glob)) continue;
-        if (found.length >= args.limit) {
-          truncated = true;
-          return;
-        }
-        try {
-          const s = await fs.stat(target);
-          found.push({ abs, rel: relPath, size: s.size, mtime: s.mtime });
-        } catch {
-          skipped.push(relPath);
-        }
-      }
-      for (const sub of subdirs) await walk(sub.abs, sub.rel, depth + 1);
-    };
-    await walk(root, '', 0);
 
     const files: LocalFile[] = await mapLimit(found, 8, async (f) => {
       const name = path.basename(f.abs);
@@ -298,4 +153,4 @@ export const readText = defineLocalTool({
   },
 });
 
-export const LOCAL_TOOLS: LocalTool[] = [listFiles, readText];
+export const LOCAL_TOOLS: LocalTool[] = [listFiles, readText, uploadFiles];

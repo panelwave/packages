@@ -7,7 +7,8 @@ import { RemoteProxy } from './remote';
 export const LOCAL_INSTRUCTIONS = [
   'This PanelWave connection runs through the local bridge (@panelwave/mcp).',
   'Besides the hosted pw_* tools it offers pw_local_* tools that work on files of this computer:',
-  'pw_local_list_files finds panel artwork or scripts in a folder, pw_local_read_text reads a script or outline.',
+  'pw_local_list_files finds panel artwork or scripts in a folder, pw_local_read_text reads a script or outline,',
+  'pw_local_upload_files uploads a folder of artwork into a work (deduplicated, resumable) before pw_panels_attach_artwork.',
   'Only folders listed in PANELWAVE_ALLOWED_DIRS are readable; paths may be absolute or relative to the first allowed folder.',
 ].join(' ');
 
@@ -84,6 +85,7 @@ export function createBridgeServer(opts: BridgeOptions): Server {
       return (await local.call(args, {
         allowedDirs: config.allowedDirs,
         signal: ctx.mcpReq.signal,
+        callRemote: (toolName, toolArgs, signal) => remote.callTool(toolName, toolArgs, { signal }),
         progress: async (progress, total, message) => {
           await notify?.({ progress, ...(total !== undefined ? { total } : {}), ...(message ? { message } : {}) });
         },

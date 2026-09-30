@@ -1,7 +1,8 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { imageSize } from 'image-size';
-import { BridgeError } from './errors';
+import { BridgeError, toBridgeError } from './errors';
+import { resolveAllowed } from './sandbox';
 
 export type FileKind = 'image' | 'video' | 'audio' | 'font' | 'text' | 'other';
 
@@ -187,4 +188,98 @@ export async function readHead(filePath: string, maxBytes: number): Promise<{ bu
   } finally {
     await handle.close();
   }
+}
+
+export const MAX_DEPTH = 12;
+export const SKIP_DIRS = new Set(['node_modules', '.git', '.svn', '.hg', '__MACOSX', '$RECYCLE.BIN', 'System Volume Information']);
+
+export interface ScanOptions {
+  /** File-name glob (see globToRegExp). */
+  glob?: string;
+  /** Extra filter applied after the glob (e.g. "media files only"). */
+  accept?: (name: string) => boolean;
+  recursive?: boolean;
+  includeHidden?: boolean;
+  limit: number;
+  signal?: AbortSignal;
+}
+
+export interface ScannedFile {
+  abs: string;
+  /** Relative to the scanned folder, forward slashes. */
+  rel: string;
+  size: number;
+  mtime: Date;
+}
+
+/**
+ * Walk a folder inside the sandbox: natural order, subfolders after the files
+ * of a folder, symlinks followed only when their target is allowed too,
+ * node_modules/.git and (unless asked) dot entries skipped.
+ */
+export async function scanFolder(
+  folder: string,
+  allowedDirs: string[],
+  opts: ScanOptions,
+): Promise<{ root: string; found: ScannedFile[]; skipped: string[]; truncated: boolean }> {
+  const root = resolveAllowed(folder, allowedDirs);
+  const stat = await fs.stat(root).catch((e) => {
+    throw toBridgeError(e);
+  });
+  if (!stat.isDirectory()) throw new BridgeError('INVALID_INPUT', `${folder} is a file, not a folder (pw_local_read_text reads a text file).`);
+
+  const found: ScannedFile[] = [];
+  const skipped: string[] = [];
+  let truncated = false;
+
+  const walk = async (dir: string, rel: string, depth: number): Promise<void> => {
+    if (truncated) return;
+    opts.signal?.throwIfAborted();
+    let entries: import('node:fs').Dirent[];
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      skipped.push(rel || '.');
+      return;
+    }
+    entries.sort((a, b) => naturalCompare(a.name, b.name));
+    const subdirs: Array<{ abs: string; rel: string }> = [];
+    for (const entry of entries) {
+      if (!opts.includeHidden && entry.name.startsWith('.')) continue;
+      const abs = path.join(dir, entry.name);
+      const relPath = rel ? `${rel}/${entry.name}` : entry.name;
+      let isDir = entry.isDirectory();
+      let isFile = entry.isFile();
+      let target = abs;
+      if (entry.isSymbolicLink()) {
+        try {
+          target = resolveAllowed(abs, allowedDirs);
+          const s = await fs.stat(target);
+          isDir = s.isDirectory();
+          isFile = s.isFile();
+        } catch {
+          skipped.push(relPath);
+          continue;
+        }
+      }
+      if (isDir) {
+        if (opts.recursive && depth < MAX_DEPTH && !SKIP_DIRS.has(entry.name)) subdirs.push({ abs: target, rel: relPath });
+        continue;
+      }
+      if (!isFile || !matchesGlob(entry.name, opts.glob) || (opts.accept && !opts.accept(entry.name))) continue;
+      if (found.length >= opts.limit) {
+        truncated = true;
+        return;
+      }
+      try {
+        const s = await fs.stat(target);
+        found.push({ abs, rel: relPath, size: s.size, mtime: s.mtime });
+      } catch {
+        skipped.push(relPath);
+      }
+    }
+    for (const sub of subdirs) await walk(sub.abs, sub.rel, depth + 1);
+  };
+  await walk(root, '', 0);
+  return { root, found, skipped, truncated };
 }
