@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.6.0",
+   "title":"PanelWave Manifest 1.7.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -1834,7 +1834,7 @@
             },
             "edges":{
                "type":"array",
-               "minItems":1,
+               "minItems":0,
                "items":{
                   "$ref":"#/$defs/Edge"
                }
@@ -2347,6 +2347,11 @@
                   "$ref":"#/$defs/Identifier"
                },
                "uniqueItems":true
+            }
+         },
+         "patternProperties":{
+            "^x-":{
+               
             }
          }
       },
@@ -3925,6 +3930,11 @@
             },
             "requiredTier":{
                "type":"string"
+            }
+         },
+         "patternProperties":{
+            "^x-":{
+               
             }
          }
       },

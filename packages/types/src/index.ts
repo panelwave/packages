@@ -1,7 +1,7 @@
 /**
- * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.6 manifest format.
+ * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.7 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.6.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.7.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -552,6 +552,7 @@ export interface GraphNode {
 export interface Graph {
   entry: Identifier | Identifier[];
   nodes?: Record<string, GraphNode>;
+  /** May be empty since 1.7.0 — the chapter then follows its reading order. */
   edges: Edge[];
 }
 
@@ -1136,6 +1137,8 @@ export interface PanelPartial {
   preloadHints?: Identifier[];
   memoryBudgetHint?: number;
   contentWarnings?: Identifier[];
+  /** Extension properties (x-*). Since 1.7.0. */
+  [key: `x-${string}`]: unknown;
 }
 
 export interface PanelVariant {
@@ -1224,6 +1227,8 @@ export interface ExtraBlock {
   downloadable?: boolean;
   /** Entitlement tier required when {@link gated} is true. */
   requiredTier?: string;
+  /** Extension properties (x-*). Since 1.7.0. */
+  [key: `x-${string}`]: unknown;
 }
 
 /**
