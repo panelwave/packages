@@ -1137,8 +1137,6 @@ export interface PanelPartial {
   preloadHints?: Identifier[];
   memoryBudgetHint?: number;
   contentWarnings?: Identifier[];
-  /** Extension properties (x-*). Since 1.7.0. */
-  [key: `x-${string}`]: unknown;
 }
 
 export interface PanelVariant {
@@ -1174,6 +1172,8 @@ export interface Panel {
   preloadHints?: Identifier[];
   memoryBudgetHint?: number;
   contentWarnings?: Identifier[];
+  /** Extension properties (x-*). Since 1.7.0. */
+  [key: `x-${string}`]: unknown;
 }
 
 // ---------------------------------------------------------------------------
