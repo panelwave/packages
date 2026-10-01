@@ -452,6 +452,7 @@
          "properties":{
             "base":{
                "type":"object",
+               "description":"Base URLs for relative asset references: a relative src/url resolves against the category base (imageBase, audioBase, videoBase, pluginsBase), then mediaBase, then the manifest document's own URL. Absolute URLs are used as-is.",
                "additionalProperties":false,
                "properties":{
                   "mediaBase":{
