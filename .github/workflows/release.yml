@@ -1,4 +1,4 @@
-# Release @panelwave/types or @panelwave/cli: bump the package version, build,
+# Release @panelwave/types, @panelwave/cli or @panelwave/mcp: bump the package version, build,
 # publish to npm, tag (<package>-v<version>) and create the GitHub release.
 # Manual trigger only.
 #
@@ -13,7 +13,7 @@ on:
       package:
         description: package to release
         type: choice
-        options: [types, cli]
+        options: [types, cli, mcp]
       bump:
         description: semver bump for packages/<package>/package.json
         type: choice
@@ -51,6 +51,9 @@ jobs:
         run: npm run build
         env:
           PANELWAVE_SCHEMA_DIR: ${{ github.workspace }}/.schema
+
+      - name: Test
+        run: npm test
 
       - name: Bump version
         id: bump

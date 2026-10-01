@@ -1,7 +1,7 @@
 {
   "name": "panelwave-packages",
   "private": true,
-  "description": "PanelWave SDK — TypeScript types and CLI tools",
+  "description": "PanelWave SDK — TypeScript types, CLI tools and the MCP bridge",
   "workspaces": [
     "packages/*"
   ],
@@ -9,6 +9,8 @@
     "build": "npm run check-schema && npm run build --workspaces",
     "build:types": "npm run build --workspace=packages/types",
     "build:cli": "npm run check-schema && npm run build --workspace=packages/cli",
+    "build:mcp": "npm run build --workspace=packages/mcp",
+    "test": "npm run test --workspaces --if-present",
     "sync-schema": "node scripts/sync-schema.js",
     "check-schema": "node scripts/sync-schema.js --check"
   },
