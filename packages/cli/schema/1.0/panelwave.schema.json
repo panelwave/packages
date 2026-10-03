@@ -1806,6 +1806,7 @@
          ],
          "properties":{
             "entry":{
+               "description":"The panel (or candidate panels) where the chapter starts. Must be keys of this chapter's panels map.",
                "oneOf":[
                   {
                      "$ref":"#/$defs/Identifier"
@@ -1850,10 +1851,12 @@
          ],
          "properties":{
             "from":{
-               "$ref":"#/$defs/Identifier"
+               "$ref":"#/$defs/Identifier",
+               "description":"Source panel. Must be a key of the panels map of the chapter that holds this graph."
             },
             "to":{
-               "$ref":"#/$defs/Identifier"
+               "$ref":"#/$defs/Identifier",
+               "description":"Target panel. Usually a panel of the same chapter, but may be a panel of any other chapter of the work (a chapter transition, a jump into an endings chapter); the reader then continues in the target's chapter. Must exist somewhere in the work."
             },
             "condition":{
                "$ref":"#/$defs/JsonLogic"
@@ -3529,7 +3532,8 @@
                      "const":"goTo"
                   },
                   "to":{
-                     "$ref":"#/$defs/Identifier"
+                     "$ref":"#/$defs/Identifier",
+                     "description":"Target panel: any panel of the work, including one in another chapter (the reader then continues in that chapter)."
                   },
                   "mutations":{
                      "type":"array",

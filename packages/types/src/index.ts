@@ -529,7 +529,12 @@ export interface Mutation {
 }
 
 export interface Edge {
+  /** Source panel — a panel of the chapter that holds this graph. */
   from: Identifier;
+  /**
+   * Target panel — usually in the same chapter, but any panel of the work is
+   * allowed; the reader then continues in the target's chapter.
+   */
   to: Identifier;
   condition?: JsonLogic;
   action?: Mutation[];
@@ -977,6 +982,7 @@ export type Shape = RectShape | CircleShape | EllipseShape | PolygonShape;
 
 export interface HotspotActionGoTo {
   type: 'goTo';
+  /** Target panel — any panel of the work, including one in another chapter. */
   to: Identifier;
   mutations?: Mutation[];
   transition?: Transition;
