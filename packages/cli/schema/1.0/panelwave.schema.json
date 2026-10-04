@@ -1129,7 +1129,8 @@
          "properties":{
             "id":{
                "type":"string",
-               "pattern":"^[a-zA-Z0-9]+(?:\\.[a-zA-Z0-9_-]+)*$"
+               "pattern":"^[a-zA-Z0-9][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_-]+)*$",
+               "description":"Variable name used as {\"var\": id} in JSON Logic: letters, digits and underscores (snake_case allowed since 1.7.0, e.g. trust_jonas), optionally followed by dot-separated parts (inventory.key)."
             },
             "description":{
                "type":"string"
@@ -1866,6 +1867,10 @@
                "items":{
                   "$ref":"#/$defs/Mutation"
                }
+            },
+            "label":{
+               "$ref":"#/$defs/LocalizedString",
+               "description":"Reader-facing choice text of this path (branch chooser buttons). Added in 1.7.0."
             },
             "transition":{
                "$ref":"#/$defs/Transition",
@@ -3170,6 +3175,12 @@
                "default":"#ffffff",
                "description":"Balloon fill/background color (CSS hex)"
             },
+            "textColor":{
+               "type":"string",
+               "pattern":"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+               "default":"#000000",
+               "description":"Lettering color (CSS hex), e.g. amber on-screen text on a dark fill. Added in 1.7.0."
+            },
             "tail":{
                "$ref":"#/$defs/TailConfig",
                "description":"Tail configuration (pointer from balloon to speaker)"
@@ -3234,6 +3245,10 @@
                "pattern":"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
             },
             "fillColor":{
+               "type":"string",
+               "pattern":"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+            },
+            "textColor":{
                "type":"string",
                "pattern":"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
             },
@@ -3509,6 +3524,16 @@
             },
             "ariaLabel":{
                "$ref":"#/$defs/LocalizedString"
+            },
+            "display":{
+               "type":"string",
+               "enum":[
+                  "auto",
+                  "button",
+                  "area"
+               ],
+               "default":"auto",
+               "description":"How readers see the hotspot. area: an invisible click area over the artwork (the label is only its accessible name). button: the label is shown as a button. auto: button when the panel's goTo hotspots lead to two or more panels (a choice), else area. Added in 1.7.0."
             },
             "action":{
                "$ref":"#/$defs/HotspotAction"
