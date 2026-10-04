@@ -173,6 +173,8 @@ export interface BalloonConfig {
   strokeWidth?: number;
   strokeColor?: ColorHex;
   fillColor?: ColorHex;
+  /** Lettering colour (CSS hex, default #000000). Since 1.7.0. */
+  textColor?: ColorHex;
   tail?: TailConfig;
   hideBorder?: HideBorderConfig;
 }
@@ -187,6 +189,8 @@ export interface BalloonConfigOverride {
   strokeWidth?: number;
   strokeColor?: ColorHex;
   fillColor?: ColorHex;
+  /** Lettering colour (CSS hex). Since 1.7.0. */
+  textColor?: ColorHex;
   tail?: Partial<TailConfig>;
   hideBorder?: Partial<HideBorderConfig>;
 }
@@ -538,6 +542,8 @@ export interface Edge {
   to: Identifier;
   condition?: JsonLogic;
   action?: Mutation[];
+  /** Reader-facing choice text of this path (branch chooser buttons). Since 1.7.0. */
+  label?: LocalizedString;
   transition?: Transition;
   /**
    * Camera travel used when this edge is traversed in canvas view.
@@ -1023,6 +1029,12 @@ export interface Hotspot {
   shape: Shape;
   label: LocalizedString;
   ariaLabel?: LocalizedString;
+  /**
+   * How readers see the hotspot: `area` (invisible click area; the label is its
+   * accessible name), `button` (the label shown as a button), `auto` (default:
+   * button when the panel's goTo hotspots lead to 2+ panels, else area). Since 1.7.0.
+   */
+  display?: 'auto' | 'button' | 'area';
   action: HotspotAction;
   visibleIf?: JsonLogic;
 }
