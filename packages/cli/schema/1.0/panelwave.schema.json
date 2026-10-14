@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.7.0",
+   "title":"PanelWave Manifest 1.8.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -3135,14 +3135,23 @@
                "minimum":40,
                "maximum":800,
                "default":120,
-               "description":"Maximum balloon width in pixels (balloon auto-sizes to text)"
+               "description":"Authored balloon width in reference pixels: the size the balloon has when its text fits, and the floor a renderer never goes below. With textFit 'grow' (default) the body grows beyond it when the active language's text needs more room."
             },
             "maxHeight":{
                "type":"number",
                "minimum":30,
                "maximum":600,
                "default":80,
-               "description":"Maximum balloon height in pixels"
+               "description":"Authored balloon height in reference pixels (the floor; see maxWidth). Renderers grow the body for longer text unless textFit is 'fixed'."
+            },
+            "textFit":{
+               "type":"string",
+               "enum":[
+                  "grow",
+                  "fixed"
+               ],
+               "default":"grow",
+               "description":"What happens when the active language's text needs more room than maxWidth × maxHeight. 'grow' (default): the renderer enlarges the body until the text fits — proportionally first (the shape keeps its aspect ratio, up to 2× per side), then in height — and keeps the tail tip on the speaker. 'fixed': the balloon keeps its authored size and the text spills over the edges (pre-1.8 behaviour). Added in 1.8.0."
             },
             "fontFamily":{
                "type":"string",
@@ -3226,6 +3235,14 @@
                "type":"number",
                "minimum":30,
                "maximum":600
+            },
+            "textFit":{
+               "type":"string",
+               "enum":[
+                  "grow",
+                  "fixed"
+               ],
+               "description":"Overrides BalloonConfig.textFit for this character/bubble. Added in 1.8.0."
             },
             "fontFamily":{
                "type":"string"

@@ -1,7 +1,7 @@
 /**
  * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.7 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.7.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.8.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -162,12 +162,24 @@ export interface HideBorderConfig {
   arc?: number;
 }
 
+/**
+ * What a balloon does when the active language's text needs more room than
+ * its authored size: `grow` (default) lets the renderer enlarge the body until
+ * the text fits, `fixed` keeps the authored size and lets the text spill.
+ * Since 1.8.0.
+ */
+export type BalloonTextFit = 'grow' | 'fixed';
+
 export interface BalloonConfig {
   balloonType?: BalloonType;
   /** 0 = rectangle, 1 = ellipse */
   cornerRadius?: number;
+  /** Authored width in reference px — the floor; with textFit 'grow' the body grows for longer text */
   maxWidth?: number;
+  /** Authored height in reference px — the floor; with textFit 'grow' the body grows for longer text */
   maxHeight?: number;
+  /** grow (default) | fixed. Since 1.8.0. */
+  textFit?: BalloonTextFit;
   fontFamily?: string;
   fontSize?: number;
   strokeWidth?: number;
@@ -184,6 +196,8 @@ export interface BalloonConfigOverride {
   cornerRadius?: number;
   maxWidth?: number;
   maxHeight?: number;
+  /** grow (default) | fixed. Since 1.8.0. */
+  textFit?: BalloonTextFit;
   fontFamily?: string;
   fontSize?: number;
   strokeWidth?: number;

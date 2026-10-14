@@ -13,7 +13,7 @@ interface UpgradeStep {
   action: string;
 }
 
-const LATEST_VERSION = '1.7.0';
+const LATEST_VERSION = '1.8.0';
 const LATEST_SCHEMA_URI = 'https://panelwave.org/schema/1.0/panelwave.schema.json';
 
 /**
