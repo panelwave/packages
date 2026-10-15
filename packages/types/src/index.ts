@@ -903,6 +903,13 @@ export interface AudioTrack {
 
 export type SequenceAudioRole = 'ambient' | 'music' | 'voiceover' | 'sfx';
 export type SequenceAudioFormat = 'tablet-portrait' | 'mobile-portrait' | 'bigscreen-landscape';
+/**
+ * How long a timeline track lasts, as authored (1.8.0, additive): 'custom'
+ * = startTime + duration; 'page' / 'chapter' = that panel range (startTime /
+ * duration hold it resolved); 'work' = keeps playing across chapter
+ * boundaries until endPanelId (else the last panel).
+ */
+export type SequenceAudioSpan = 'custom' | 'page' | 'chapter' | 'work';
 
 export interface SequenceAudioTrack {
   id: Identifier;
@@ -922,7 +929,10 @@ export interface SequenceAudioTrack {
   playbackRate?: number;
   muted?: boolean;
   startPanelId?: Identifier;
+  /** Range end; for span 'work' it may be a panel of a later chapter. */
   endPanelId?: Identifier;
+  /** Default 'custom'. */
+  span?: SequenceAudioSpan;
 }
 
 // ---------------------------------------------------------------------------

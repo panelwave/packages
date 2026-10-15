@@ -1515,7 +1515,7 @@
             },
             "sequenceAudioTracks":{
                "type":"array",
-               "description":"Audio tracks that span multiple panels within this chapter",
+               "description":"Timeline audio (music, ambience, voiceover beds) that starts in this chapter and spans several panels. Times are relative to the chapter start; a span:'work' track keeps playing into later chapters.",
                "items":{
                   "$ref":"#/$defs/SequenceAudioTrack"
                },
@@ -2903,7 +2903,7 @@
       },
       "SequenceAudioTrack":{
          "type":"object",
-         "description":"Audio track that spans multiple panels within a chapter",
+         "description":"Audio track that spans multiple panels, starting in its chapter. With span 'work' it continues across chapter boundaries.",
          "additionalProperties":false,
          "required":[
             "id",
@@ -3002,7 +3002,18 @@
             },
             "endPanelId":{
                "$ref":"#/$defs/Identifier",
-               "description":"Optional explicit panel range end"
+               "description":"Optional explicit panel range end. For span 'work' it may name a panel of a later chapter."
+            },
+            "span":{
+               "type":"string",
+               "enum":[
+                  "custom",
+                  "page",
+                  "chapter",
+                  "work"
+               ],
+               "default":"custom",
+               "description":"How long the track lasts, as authored. 'custom' (default): startTime + duration as given. 'page' / 'chapter': the panels of one page / of its chapter (startPanelId..endPanelId); startTime and duration hold the resolved range, so a player may use them as they are. 'work': from its start to the end of the work — it keeps playing across chapter boundaries (until endPanelId, else the last panel) instead of stopping when its chapter ends. Added in 1.8.0 (additive)."
             }
          }
       },
