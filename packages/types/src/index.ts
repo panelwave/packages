@@ -1,7 +1,7 @@
 /**
  * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.7 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.8.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.9.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -1368,6 +1368,8 @@ export type TrackingEvent =
   | 'sfx_toggle'
   | 'speech_toggle'
   | 'paywall_view'
+  /** Reader acted on a paywall gate (purchase / subscribe / login / dismiss). Since 1.9.0; camelCase like the video events, matching the player's event name. */
+  | 'paywallAction'
   | 'like'
   | 'bookmark'
   | 'share'

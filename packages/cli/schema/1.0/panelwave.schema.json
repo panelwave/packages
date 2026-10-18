@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.8.0",
+   "title":"PanelWave Manifest 1.9.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -4272,6 +4272,7 @@
                      "sfx_toggle",
                      "speech_toggle",
                      "paywall_view",
+                     "paywallAction",
                      "like",
                      "bookmark",
                      "share",
