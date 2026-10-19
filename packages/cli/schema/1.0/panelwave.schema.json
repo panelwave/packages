@@ -2563,17 +2563,19 @@
             },
             "x":{
                "type":"number",
-               "description":"Editor transform: X position."
+               "description":"Left edge in the panel's layer reference space: 1024 units tall, 1024 × the background artwork's aspect wide, origin top-left. Players place the layer at x / referenceWidth of the panel box. Ignored on the background layer (first image layer at z 0), which always fills the panel."
             },
             "y":{
                "type":"number",
-               "description":"Editor transform: Y position."
+               "description":"Top edge in the layer reference space (see x); y / 1024 of the panel box."
             },
             "width":{
-               "type":"number"
+               "type":"number",
+               "description":"Width in the layer reference space (see x). Absent = the full reference width."
             },
             "height":{
-               "type":"number"
+               "type":"number",
+               "description":"Height in the layer reference space (see x). Absent = the full 1024."
             },
             "scaleX":{
                "type":"number"
@@ -2600,7 +2602,8 @@
                "type":"string"
             },
             "fontSize":{
-               "type":"number"
+               "type":"number",
+               "description":"Text-layer font size in layer reference units (see x): scales with the panel box."
             },
             "fontWeight":{
                "type":"string"
