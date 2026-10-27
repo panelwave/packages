@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.9.0",
+   "title":"PanelWave Manifest 1.10.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -452,7 +452,7 @@
          "properties":{
             "base":{
                "type":"object",
-               "description":"Base URLs for relative asset references: a relative src/url resolves against the category base (imageBase, audioBase, videoBase, pluginsBase), then mediaBase, then the manifest document's own URL. Absolute URLs are used as-is.",
+               "description":"Base URLs for relative asset references: a relative src/url resolves against the category base (imageBase, audioBase, videoBase, pluginsBase, filesBase), then mediaBase, then the manifest document's own URL. Absolute URLs are used as-is.",
                "additionalProperties":false,
                "properties":{
                   "mediaBase":{
@@ -475,6 +475,10 @@
                   },
                   "pluginsBase":{
                      "$ref":"#/$defs/Uri"
+                  },
+                  "filesBase":{
+                     "$ref":"#/$defs/Uri",
+                     "description":"Base URL for `file` assets (schema 1.10+)."
                   }
                }
             },
@@ -509,6 +513,9 @@
                      },
                      {
                         "$ref":"#/$defs/AssetCatalogItemPluginPayload"
+                     },
+                     {
+                        "$ref":"#/$defs/AssetCatalogItemFile"
                      }
                   ]
                },
@@ -948,6 +955,17 @@
                         "ui",
                         "none"
                      ]
+                  },
+                  "waveform":{
+                     "type":"array",
+                     "description":"Normalised peak amplitudes (0..1), evenly spaced over durationMs — drawn by audio player widgets (schema 1.10+).",
+                     "minItems":16,
+                     "maxItems":1024,
+                     "items":{
+                        "type":"number",
+                        "minimum":0,
+                        "maximum":1
+                     }
                   },
                   "variants":{
                      "type":"array",
@@ -2482,7 +2500,529 @@
             }
          }
       },
+      "ColorHexAlpha":{
+         "title":"CSS Hex Color with optional alpha",
+         "description":"#rgb, #rrggbb or #rrggbbaa (schema 1.10+).",
+         "type":"string",
+         "pattern":"^#([A-Fa-f0-9]{8}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+      },
+      "ThemeColors":{
+         "title":"Theme colours",
+         "description":"Colour tokens of the reader-facing widgets (schema 1.10+). Every key is optional; a player derives missing keys from ui.branding and its built-in light/dark defaults.",
+         "type":"object",
+         "additionalProperties":false,
+         "properties":{
+            "surface":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Widget/card and modal background."
+            },
+            "onSurface":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Text and icons on surface."
+            },
+            "surfaceMuted":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Secondary surface (headers, inactive controls)."
+            },
+            "onSurfaceMuted":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Secondary text (file size, times, descriptions)."
+            },
+            "accent":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Primary action colour (play button, download button, choice buttons)."
+            },
+            "onAccent":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Text and icons on accent."
+            },
+            "border":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Card and control borders."
+            },
+            "focus":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Keyboard focus ring."
+            },
+            "track":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Unplayed part of progress/scrub bars."
+            },
+            "progress":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Played part of progress/scrub bars."
+            },
+            "waveform":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Unplayed waveform bars."
+            },
+            "waveformProgress":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Played waveform bars."
+            },
+            "link":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Links inside scroll text."
+            },
+            "backdrop":{
+               "$ref":"#/$defs/ColorHexAlpha",
+               "description":"Modal backdrop; an alpha value (#rrggbbaa) keeps the panel visible behind it."
+            }
+         }
+      },
+      "ThemeFont":{
+         "title":"Theme font",
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "family"
+         ],
+         "properties":{
+            "family":{
+               "type":"string",
+               "minLength":1,
+               "maxLength":64,
+               "pattern":"^[A-Za-z0-9 ,'\"._-]+$",
+               "description":"Font family name. Players do not download fonts from the manifest; the host page (or the reader/package) provides the font, otherwise `fallback` applies."
+            },
+            "fallback":{
+               "type":"string",
+               "maxLength":128,
+               "pattern":"^[A-Za-z0-9 ,'\"._-]+$",
+               "description":"CSS fallback stack, e.g. \"system-ui, sans-serif\"."
+            }
+         }
+      },
+      "UITheme":{
+         "title":"UI theme",
+         "description":"Work-wide look of the reader-facing widgets (content widget layers, video modal, action modal, choice buttons, branch chooser, toasts) — schema 1.10+. Cascade in the player: per-layer themeOverrides -> ui.theme.colors -> derived from ui.branding (accent = accentColor, surface = primaryColor) -> built-in defaults for `mode`.",
+         "type":"object",
+         "additionalProperties":false,
+         "properties":{
+            "mode":{
+               "type":"string",
+               "enum":[
+                  "light",
+                  "dark",
+                  "auto"
+               ],
+               "default":"dark",
+               "description":"Built-in default palette; `auto` follows the reader's prefers-color-scheme. Explicit colours win in every mode."
+            },
+            "colors":{
+               "$ref":"#/$defs/ThemeColors"
+            },
+            "fonts":{
+               "type":"object",
+               "additionalProperties":false,
+               "properties":{
+                  "ui":{
+                     "$ref":"#/$defs/ThemeFont",
+                     "description":"Widget chrome: titles, buttons, times, file names."
+                  },
+                  "body":{
+                     "$ref":"#/$defs/ThemeFont",
+                     "description":"Default body font of scroll text layers (a styleRef/style on the layer wins)."
+                  }
+               }
+            },
+            "shape":{
+               "type":"object",
+               "additionalProperties":false,
+               "properties":{
+                  "radius":{
+                     "type":"number",
+                     "minimum":0,
+                     "maximum":32,
+                     "default":12,
+                     "description":"Corner radius in CSS px (not scaled with the panel)."
+                  },
+                  "borderWidth":{
+                     "type":"number",
+                     "minimum":0,
+                     "maximum":4,
+                     "default":1,
+                     "description":"Border width in CSS px."
+                  },
+                  "shadow":{
+                     "type":"string",
+                     "enum":[
+                        "none",
+                        "soft",
+                        "hard"
+                     ],
+                     "default":"soft"
+                  }
+               }
+            },
+            "density":{
+               "type":"string",
+               "enum":[
+                  "regular",
+                  "compact"
+               ],
+               "default":"regular",
+               "description":"compact: smaller paddings and controls."
+            }
+         }
+      },
+      "WidgetLayerCommon":{
+         "title":"Widget layer common fields",
+         "description":"Fields shared by the content widget layers (download, audioPlayer, videoPlayer, scrollText, iframe) — schema 1.10+. Widgets are reader-facing UI drawn by the player with ui.theme; their box is LayerCommon x/y/width/height in the layer reference space (width and height are required).",
+         "type":"object",
+         "properties":{
+            "title":{
+               "$ref":"#/$defs/LocalizedString",
+               "description":"Heading / accessible name of the widget."
+            },
+            "appearance":{
+               "type":"string",
+               "enum":[
+                  "card",
+                  "plain"
+               ],
+               "default":"card",
+               "description":"card: themed surface with border, radius and shadow from ui.theme. plain: no surface, only the control itself on the artwork."
+            },
+            "themeOverrides":{
+               "$ref":"#/$defs/ThemeColors",
+               "description":"Per-layer colour overrides (rare). Fonts and shape are work-wide only."
+            }
+         }
+      },
+      "DownloadLayer":{
+         "description":"A downloadable file (PDF, Word, Excel, PowerPoint, …) shown as a card with icon, name and size (schema 1.10+).",
+         "allOf":[
+            {
+               "$ref":"#/$defs/LayerCommon"
+            },
+            {
+               "$ref":"#/$defs/WidgetLayerCommon"
+            },
+            {
+               "type":"object",
+               "required":[
+                  "kind",
+                  "assetId",
+                  "width",
+                  "height"
+               ],
+               "properties":{
+                  "kind":{
+                     "type":"string",
+                     "const":"download"
+                  },
+                  "assetId":{
+                     "$ref":"#/$defs/Identifier",
+                     "description":"A catalog item of category `file`."
+                  },
+                  "fileName":{
+                     "$ref":"#/$defs/LocalizedString",
+                     "description":"Display and download name. Default: the file variant's fileName."
+                  },
+                  "description":{
+                     "$ref":"#/$defs/LocalizedString",
+                     "description":"One-line sub text below the name."
+                  },
+                  "showIcon":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"File-type icon derived from the variant's mime / extension."
+                  },
+                  "showSize":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"File size from the variant's sizeBytes, formatted for the reader's locale."
+                  }
+               }
+            }
+         ],
+         "unevaluatedProperties":false
+      },
+      "AudioPlayerLayer":{
+         "description":"A visible audio player (play/pause, waveform, position, seeking) for listening on demand — never autoplays and is not panel background audio (that is AudioLayer). Schema 1.10+.",
+         "allOf":[
+            {
+               "$ref":"#/$defs/LayerCommon"
+            },
+            {
+               "$ref":"#/$defs/WidgetLayerCommon"
+            },
+            {
+               "type":"object",
+               "required":[
+                  "kind",
+                  "assetId",
+                  "width",
+                  "height"
+               ],
+               "properties":{
+                  "kind":{
+                     "type":"string",
+                     "const":"audioPlayer"
+                  },
+                  "assetId":{
+                     "$ref":"#/$defs/Identifier",
+                     "description":"A catalog item of category `audio`; its durationMs and waveform are used."
+                  },
+                  "showWaveform":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Draw the catalog item's waveform peaks (a plain progress bar when the item has none). Click/drag in it seeks."
+                  },
+                  "showTime":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Show current position / duration."
+                  },
+                  "duckMusic":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Lower music and ambient audio while this player plays."
+                  },
+                  "startAtMs":{
+                     "type":"integer",
+                     "minimum":0,
+                     "description":"Initial position."
+                  }
+               }
+            }
+         ],
+         "unevaluatedProperties":false
+      },
+      "VideoPlayerLayer":{
+         "description":"A video that opens in a modal with play/pause, position and seeking (schema 1.10+). Unlike VideoLayer it is not part of the artwork and never plays on the panel itself.",
+         "allOf":[
+            {
+               "$ref":"#/$defs/LayerCommon"
+            },
+            {
+               "$ref":"#/$defs/WidgetLayerCommon"
+            },
+            {
+               "type":"object",
+               "required":[
+                  "kind",
+                  "assetId",
+                  "width",
+                  "height"
+               ],
+               "properties":{
+                  "kind":{
+                     "type":"string",
+                     "const":"videoPlayer"
+                  },
+                  "assetId":{
+                     "$ref":"#/$defs/Identifier",
+                     "description":"A catalog item of category `video`; its poster is shown on the panel."
+                  },
+                  "trigger":{
+                     "type":"string",
+                     "enum":[
+                        "poster",
+                        "button"
+                     ],
+                     "default":"poster",
+                     "description":"poster: the poster with a play badge and the title. button: a themed button with the title."
+                  },
+                  "autoplayInModal":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Start playback when the modal opens (the opening click is the user gesture)."
+                  },
+                  "showDuration":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Show the video duration on the trigger."
+                  }
+               }
+            }
+         ],
+         "unevaluatedProperties":false
+      },
+      "ScrollTextLayer":{
+         "description":"A box with longer text that scrolls inside its bounds (schema 1.10+).",
+         "allOf":[
+            {
+               "$ref":"#/$defs/LayerCommon"
+            },
+            {
+               "$ref":"#/$defs/WidgetLayerCommon"
+            },
+            {
+               "type":"object",
+               "required":[
+                  "kind",
+                  "text",
+                  "width",
+                  "height"
+               ],
+               "properties":{
+                  "kind":{
+                     "type":"string",
+                     "const":"scrollText"
+                  },
+                  "text":{
+                     "$ref":"#/$defs/LocalizedString",
+                     "description":"The text. With format `markdown`: headings (##–####), paragraphs, **bold**, *italic*, bullet and numbered lists, [links](https://…) and `inline code` — no raw HTML, images or tables."
+                  },
+                  "format":{
+                     "type":"string",
+                     "enum":[
+                        "plain",
+                        "markdown"
+                     ],
+                     "default":"plain"
+                  },
+                  "styleRef":{
+                     "$ref":"#/$defs/Identifier",
+                     "description":"Name of a text style preset in settings.typography.textStyles. Cascade: ui.theme.fonts.body -> preset -> inline `style`."
+                  },
+                  "style":{
+                     "$ref":"#/$defs/TextStyle"
+                  }
+               }
+            }
+         ],
+         "unevaluatedProperties":false
+      },
+      "IframeLayer":{
+         "description":"An embedded external page (map, quiz, form, video platform, H5P, …) — schema 1.10+.",
+         "allOf":[
+            {
+               "$ref":"#/$defs/LayerCommon"
+            },
+            {
+               "$ref":"#/$defs/WidgetLayerCommon"
+            },
+            {
+               "type":"object",
+               "required":[
+                  "kind",
+                  "src",
+                  "title",
+                  "width",
+                  "height"
+               ],
+               "properties":{
+                  "kind":{
+                     "type":"string",
+                     "const":"iframe"
+                  },
+                  "src":{
+                     "type":"string",
+                     "format":"uri",
+                     "pattern":"^https://",
+                     "description":"https URL of the embedded page. Players refuse other schemes and the reader's own origin."
+                  },
+                  "title":{
+                     "$ref":"#/$defs/LocalizedString",
+                     "description":"Required accessible name of the frame."
+                  },
+                  "allow":{
+                     "type":"array",
+                     "uniqueItems":true,
+                     "items":{
+                        "type":"string",
+                        "enum":[
+                           "fullscreen",
+                           "autoplay",
+                           "encrypted-media",
+                           "picture-in-picture",
+                           "clipboard-write"
+                        ]
+                     },
+                     "description":"Permissions for the frame's `allow` attribute. Camera, microphone and geolocation are never granted."
+                  },
+                  "sandbox":{
+                     "type":"string",
+                     "enum":[
+                        "default",
+                        "strict",
+                        "none"
+                     ],
+                     "default":"default",
+                     "description":"default: allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox (what common embeds need). strict: allow-scripts only. none: no sandbox attribute (explicit opt-in for embeds that break when sandboxed)."
+                  },
+                  "lazy":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Load the frame only while its panel is current (panel view) or on screen (page view)."
+                  },
+                  "showOpenLink":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Show an \"Open in new tab\" link — the fallback for pages that refuse to be framed."
+                  }
+               }
+            }
+         ],
+         "unevaluatedProperties":false
+      },
+      "FileVariant":{
+         "type":"object",
+         "additionalProperties":false,
+         "required":[
+            "src"
+         ],
+         "properties":{
+            "src":{
+               "type":"string"
+            },
+            "mime":{
+               "type":"string",
+               "description":"MIME type; when omitted consumers derive it from the src / fileName extension."
+            },
+            "sizeBytes":{
+               "type":"integer",
+               "minimum":0
+            },
+            "fileName":{
+               "type":"string",
+               "minLength":1,
+               "maxLength":255,
+               "description":"Original file name including extension; the default download name."
+            },
+            "sha256":{
+               "type":"string",
+               "pattern":"^[A-Fa-f0-9]{64}$"
+            },
+            "locale":{
+               "$ref":"#/$defs/LocaleCode"
+            }
+         }
+      },
+      "AssetCatalogItemFile":{
+         "description":"A downloadable document or archive (schema 1.10+), referenced by DownloadLayer.",
+         "allOf":[
+            {
+               "$ref":"#/$defs/AssetCommon"
+            },
+            {
+               "type":"object",
+               "required":[
+                  "category",
+                  "variants"
+               ],
+               "properties":{
+                  "category":{
+                     "type":"string",
+                     "const":"file"
+                  },
+                  "variants":{
+                     "type":"array",
+                     "minItems":1,
+                     "items":{
+                        "$ref":"#/$defs/FileVariant"
+                     }
+                  }
+               }
+            }
+         ],
+         "unevaluatedProperties":false
+      },
       "Layer":{
+         "description":"A panel layer, discriminated by `kind`. Consumers that do not know a kind (e.g. an older player reading a newer manifest) must skip that layer and render the rest.",
          "oneOf":[
             {
                "$ref":"#/$defs/ImageLayer"
@@ -2501,6 +3041,21 @@
             },
             {
                "$ref":"#/$defs/PluginLayer"
+            },
+            {
+               "$ref":"#/$defs/DownloadLayer"
+            },
+            {
+               "$ref":"#/$defs/AudioPlayerLayer"
+            },
+            {
+               "$ref":"#/$defs/VideoPlayerLayer"
+            },
+            {
+               "$ref":"#/$defs/ScrollTextLayer"
+            },
+            {
+               "$ref":"#/$defs/IframeLayer"
             }
          ]
       },
@@ -4285,7 +4840,10 @@
                      "videoPlay",
                      "videoPause",
                      "videoEnded",
-                     "videoLoop"
+                     "videoLoop",
+                     "download",
+                     "widgetPlay",
+                     "widgetOpen"
                   ]
                },
                "uniqueItems":true
@@ -4299,6 +4857,9 @@
          "type":"object",
          "additionalProperties":false,
          "properties":{
+            "theme":{
+               "$ref":"#/$defs/UITheme"
+            },
             "branding":{
                "type":"object",
                "additionalProperties":false,

@@ -14,7 +14,11 @@ describe('mime and kind', () => {
     ['script.fountain', 'text/x-fountain', 'text'],
     ['outline.json', 'application/json', 'text'],
     ['notes.md', 'text/markdown', 'text'],
-    ['archive.zip', 'application/zip', 'other'],
+    ['archive.zip', 'application/zip', 'file'],
+    ['worksheet.pdf', 'application/pdf', 'file'],
+    ['Slides.PPTX', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'file'],
+    ['data.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'file'],
+    ['letter.odt', 'application/vnd.oasis.opendocument.text', 'file'],
     ['noext', 'application/octet-stream', 'other'],
   ])('%s → %s / %s', (name, mime, kind) => {
     expect(mimeOf(name)).toBe(mime);

@@ -9,7 +9,7 @@ import { resolveAllowed } from './sandbox';
 import { defineLocalTool, formatBytes, mapLimit, type LocalToolContext, type RemoteCaller, type RemoteResult } from './tool';
 
 /** Kinds the asset library accepts. */
-export const UPLOADABLE_KINDS: ReadonlySet<FileKind> = new Set(['image', 'video', 'audio', 'font']);
+export const UPLOADABLE_KINDS: ReadonlySet<FileKind> = new Set(['image', 'video', 'audio', 'font', 'file']);
 export const MAX_FILES = 500;
 export const MAX_ATTEMPTS = 3;
 
@@ -228,7 +228,7 @@ export async function uploadBatch(opts: UploadOptions): Promise<UploadRow[]> {
     const row: UploadRow = { path: file.abs, filename, ok: false, status: 'failed', deduplicated: false, mimeType, sizeBytes: file.size, warnings: [] };
     try {
       if (opts.signal?.aborted) throw new BridgeError('CANCELLED', 'The call was cancelled.');
-      if (!UPLOADABLE_KINDS.has(kind)) throw new BridgeError('INVALID_INPUT', `${filename} is not an image, video, audio or font file (${mimeType}).`);
+      if (!UPLOADABLE_KINDS.has(kind)) throw new BridgeError('INVALID_INPUT', `${filename} is not an image, video, audio, font or document file (${mimeType}).`);
       if (file.size <= 0) throw new BridgeError('INVALID_INPUT', `${filename} is empty.`);
       row.kind = kind;
       const sha256 = await sha256File(file.abs, opts.signal);

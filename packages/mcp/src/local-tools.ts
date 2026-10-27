@@ -16,7 +16,7 @@ export { errorResult } from './tool';
 
 export const LIST_LIMIT_DEFAULT = 1000;
 export const LIST_LIMIT_MAX = 5000;
-const zFileKind = z.enum(['image', 'video', 'audio', 'font', 'text', 'other']);
+const zFileKind = z.enum(['image', 'video', 'audio', 'font', 'file', 'text', 'other']);
 
 const zLocalFile = z.object({
   path: z.string().describe('Absolute path — pass it to pw_local_read_text or pw_local_upload_files.'),
@@ -56,7 +56,7 @@ export const listFiles = defineLocalTool({
   name: 'pw_local_list_files',
   title: 'List local files',
   description:
-    'List files in a folder on this computer (only inside the folders the PanelWave bridge was allowed to read). Returns absolute paths, size, mime type, kind (image/video/audio/font/text/other) and — for images — pixel dimensions with EXIF orientation applied. Files are sorted naturally (panel-2 before panel-10). Use it to find panel artwork before pw_local_upload_files, or a script before pw_local_read_text.',
+    'List files in a folder on this computer (only inside the folders the PanelWave bridge was allowed to read). Returns absolute paths, size, mime type, kind (image/video/audio/font/file/text/other — file = PDF, Office, OpenDocument, RTF, EPUB, ZIP) and — for images — pixel dimensions with EXIF orientation applied. Files are sorted naturally (panel-2 before panel-10). Use it to find panel artwork before pw_local_upload_files, or a script before pw_local_read_text.',
   input: listFilesInput,
   output: listFilesOutput,
   async run(args, ctx) {

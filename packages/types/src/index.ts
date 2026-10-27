@@ -1,7 +1,7 @@
 /**
  * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.7 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.9.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.10.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -21,6 +21,9 @@ export type Uri = string;
 
 /** CSS hex color, e.g. `#FF0000` or `#F00` */
 export type ColorHex = string;
+
+/** CSS hex color with optional alpha: `#rgb`, `#rrggbb` or `#rrggbbaa` (schema 1.10+) */
+export type ColorHexAlpha = string;
 
 /** ISO 8601 date-time string */
 export type Timestamp = string;
@@ -257,6 +260,8 @@ export interface AssetBase {
   sfxBase?: Uri;
   thumbsBase?: Uri;
   pluginsBase?: Uri;
+  /** Base URL for `file` assets (schema 1.10+). */
+  filesBase?: Uri;
 }
 
 export interface AssetCommon {
@@ -345,6 +350,8 @@ export interface AssetCatalogItemImage extends AssetCommon {
 export interface AssetCatalogItemAudio extends AssetCommon {
   category: 'audio';
   role?: AudioRole;
+  /** Since schema 1.10: 16–1024 normalised peak amplitudes (0..1), evenly spaced over `durationMs`; drawn by audio player widgets. */
+  waveform?: number[];
   variants: AudioVariant[];
 }
 
@@ -374,6 +381,24 @@ export interface AssetCatalogItemPluginPayload extends AssetCommon {
   variants: JsonVariant[];
 }
 
+/** A downloadable file variant (schema 1.10+). */
+export interface FileVariant {
+  src: string;
+  /** Derived from the src / fileName extension when omitted. */
+  mime?: string;
+  sizeBytes?: number;
+  /** Original file name including extension; the default download name. */
+  fileName?: string;
+  sha256?: string;
+  locale?: LocaleCode;
+}
+
+/** A downloadable document or archive, referenced by DownloadLayer (schema 1.10+). */
+export interface AssetCatalogItemFile extends AssetCommon {
+  category: 'file';
+  variants: FileVariant[];
+}
+
 export type AssetCatalogItem =
   | AssetCatalogItemImage
   | AssetCatalogItemAudio
@@ -381,7 +406,8 @@ export type AssetCatalogItem =
   | AssetCatalogItemSubtitle
   | AssetCatalogItemVector
   | AssetCatalogItemJson
-  | AssetCatalogItemPluginPayload;
+  | AssetCatalogItemPluginPayload
+  | AssetCatalogItemFile;
 
 /** Since schema 1.5: authoring asset-library folder (tree via parentId). */
 export interface AssetFolder {
@@ -886,7 +912,117 @@ export interface PluginLayer extends LayerCommon {
   plugin: PluginInstance;
 }
 
-export type Layer = ImageLayer | AudioLayer | VideoLayer | TextLayer | VectorLayer | PluginLayer;
+// ---------------------------------------------------------------------------
+// Content widget layers (schema 1.10+)
+// ---------------------------------------------------------------------------
+
+export type WidgetAppearance = 'card' | 'plain';
+
+/**
+ * Fields shared by the content widget layers. Widgets are reader-facing UI the
+ * player draws with `ui.theme`; their box is `x`/`y`/`width`/`height` in the layer
+ * reference space, and `width` / `height` are required.
+ */
+export interface WidgetLayerCommon extends LayerCommon {
+  width: number;
+  height: number;
+  /** Heading / accessible name of the widget. */
+  title?: LocalizedString;
+  /** `card` (default): themed surface. `plain`: only the control itself. */
+  appearance?: WidgetAppearance;
+  /** Per-layer colour overrides (rare). Fonts and shape are work-wide only. */
+  themeOverrides?: ThemeColors;
+}
+
+/** A downloadable file shown as a card with icon, name and size. */
+export interface DownloadLayer extends WidgetLayerCommon {
+  kind: 'download';
+  /** A catalog item of category `file`. */
+  assetId: Identifier;
+  /** Display and download name; default = the file variant's `fileName`. */
+  fileName?: LocalizedString;
+  description?: LocalizedString;
+  /** Default true. */
+  showIcon?: boolean;
+  /** Default true. */
+  showSize?: boolean;
+}
+
+/** A visible audio player (play/pause, waveform, position, seeking). Never autoplays; panel background audio is `AudioLayer`. */
+export interface AudioPlayerLayer extends WidgetLayerCommon {
+  kind: 'audioPlayer';
+  /** A catalog item of category `audio`. */
+  assetId: Identifier;
+  /** Default true. */
+  showWaveform?: boolean;
+  /** Default true. */
+  showTime?: boolean;
+  /** Lower music and ambient audio while playing. Default true. */
+  duckMusic?: boolean;
+  startAtMs?: number;
+}
+
+export type VideoPlayerTrigger = 'poster' | 'button';
+
+/** A video that opens in a modal player. */
+export interface VideoPlayerLayer extends WidgetLayerCommon {
+  kind: 'videoPlayer';
+  /** A catalog item of category `video`. */
+  assetId: Identifier;
+  /** Default `poster`. */
+  trigger?: VideoPlayerTrigger;
+  /** Default true. */
+  autoplayInModal?: boolean;
+  /** Default true. */
+  showDuration?: boolean;
+}
+
+export type ScrollTextFormat = 'plain' | 'markdown';
+
+/** A box with longer text that scrolls inside its bounds. */
+export interface ScrollTextLayer extends WidgetLayerCommon {
+  kind: 'scrollText';
+  text: LocalizedString;
+  /** `markdown` = safe subset (headings, paragraphs, bold/italic, lists, links, inline code); no raw HTML. Default `plain`. */
+  format?: ScrollTextFormat;
+  /** Name of a preset in settings.typography.textStyles. */
+  styleRef?: Identifier;
+  style?: TextLayerStyle;
+}
+
+export type IframeAllow = 'fullscreen' | 'autoplay' | 'encrypted-media' | 'picture-in-picture' | 'clipboard-write';
+export type IframeSandbox = 'default' | 'strict' | 'none';
+
+/** An embedded external page. */
+export interface IframeLayer extends WidgetLayerCommon {
+  kind: 'iframe';
+  /** https URL only. */
+  src: Uri;
+  /** Required accessible name of the frame. */
+  title: LocalizedString;
+  allow?: IframeAllow[];
+  /** Default `default`. */
+  sandbox?: IframeSandbox;
+  /** Default true. */
+  lazy?: boolean;
+  /** Default true. */
+  showOpenLink?: boolean;
+}
+
+export type WidgetLayer = DownloadLayer | AudioPlayerLayer | VideoPlayerLayer | ScrollTextLayer | IframeLayer;
+
+export type Layer =
+  | ImageLayer
+  | AudioLayer
+  | VideoLayer
+  | TextLayer
+  | VectorLayer
+  | PluginLayer
+  | DownloadLayer
+  | AudioPlayerLayer
+  | VideoPlayerLayer
+  | ScrollTextLayer
+  | IframeLayer;
 
 // ---------------------------------------------------------------------------
 // Audio tracks
@@ -1379,7 +1515,13 @@ export type TrackingEvent =
   | 'videoPlay'
   | 'videoPause'
   | 'videoEnded'
-  | 'videoLoop';
+  | 'videoLoop'
+  /** Since 1.10.0: a download widget was clicked. */
+  | 'download'
+  /** Since 1.10.0: an audio or video player widget started playback. */
+  | 'widgetPlay'
+  /** Since 1.10.0: a video modal or iframe widget was shown. */
+  | 'widgetOpen';
 
 export interface TrackingConsent {
   required?: boolean;
@@ -1412,7 +1554,54 @@ export interface UIControls {
   showThumbnails?: boolean;
 }
 
+/** Colour tokens of the reader-facing widgets (schema 1.10+). Every key is optional. */
+export interface ThemeColors {
+  surface?: ColorHex;
+  onSurface?: ColorHex;
+  surfaceMuted?: ColorHex;
+  onSurfaceMuted?: ColorHex;
+  accent?: ColorHex;
+  onAccent?: ColorHex;
+  border?: ColorHex;
+  focus?: ColorHex;
+  track?: ColorHex;
+  progress?: ColorHex;
+  waveform?: ColorHex;
+  waveformProgress?: ColorHex;
+  link?: ColorHex;
+  backdrop?: ColorHexAlpha;
+}
+
+export interface ThemeFont {
+  family: string;
+  /** CSS fallback stack, e.g. `system-ui, sans-serif`. */
+  fallback?: string;
+}
+
+export interface UIThemeShape {
+  /** CSS px, 0–32. Default 12. */
+  radius?: number;
+  /** CSS px, 0–4. Default 1. */
+  borderWidth?: number;
+  shadow?: 'none' | 'soft' | 'hard';
+}
+
+/**
+ * Work-wide look of the reader-facing widgets (schema 1.10+). Cascade in the player:
+ * layer `themeOverrides` -> `colors` -> derived from `UISettings.branding` -> built-in defaults for `mode`.
+ */
+export interface UITheme {
+  /** Default `dark`; `auto` follows prefers-color-scheme. */
+  mode?: 'light' | 'dark' | 'auto';
+  colors?: ThemeColors;
+  fonts?: { ui?: ThemeFont; body?: ThemeFont };
+  shape?: UIThemeShape;
+  density?: 'regular' | 'compact';
+}
+
 export interface UISettings {
+  /** Since schema 1.10. */
+  theme?: UITheme;
   branding?: UIBranding;
   controls?: UIControls;
 }

@@ -111,7 +111,7 @@ The assistant asks before destructive steps such as deleting pages or panels.
 |------|--------------|
 | `pw_local_list_files` | Lists a folder: absolute path, size, mime type, kind, and for images the pixel dimensions with EXIF orientation applied. Supports a name glob such as `*.{png,jpg}`, subfolders and a limit. Files sort naturally, so `panel-2` comes before `panel-10`. |
 | `pw_local_read_text` | Reads a UTF-8 text file such as a script, `.fountain` screenplay or outline. Files over 1 MiB are cut and flagged `truncated`; `maxBytes` goes up to 5 MiB. Binary files are refused. |
-| `pw_local_upload_files` | Uploads images, videos, audio and fonts into a work's asset library, from a folder with an optional glob or from a list of paths. See below. |
+| `pw_local_upload_files` | Uploads images, videos, audio, fonts and documents (PDF, Office, OpenDocument, RTF, EPUB, ZIP — asset kind `file`) into a work's asset library, from a folder with an optional glob or from a list of paths. See below. |
 
 Every path is resolved, with symlinks followed, and must stay inside `PANELWAVE_ALLOWED_DIRS`. Anything else fails with `INVALID_INPUT`. The check runs on the path text before the filesystem is touched, and network paths (`\\server\share`) are refused, so a path can never make Windows connect to another machine. Relative paths are taken from the first allowed folder. Hidden files and `node_modules` are skipped in listings unless you ask for them, and `pw_local_read_text` never reads hidden files or folders such as `.ssh` or `.env`. The list and read tools never change anything.
 

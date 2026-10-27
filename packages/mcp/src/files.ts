@@ -4,7 +4,7 @@ import { imageSize } from 'image-size';
 import { BridgeError, toBridgeError } from './errors';
 import { resolveAllowed } from './sandbox';
 
-export type FileKind = 'image' | 'video' | 'audio' | 'font' | 'text' | 'other';
+export type FileKind = 'image' | 'video' | 'audio' | 'font' | 'file' | 'text' | 'other';
 
 const MIME: Record<string, string> = {
   '.png': 'image/png',
@@ -51,18 +51,47 @@ const MIME: Record<string, string> = {
   '.vtt': 'text/vtt',
   '.pdf': 'application/pdf',
   '.zip': 'application/zip',
+  '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.odt': 'application/vnd.oasis.opendocument.text',
+  '.ods': 'application/vnd.oasis.opendocument.spreadsheet',
+  '.odp': 'application/vnd.oasis.opendocument.presentation',
+  '.rtf': 'application/rtf',
+  '.epub': 'application/epub+zip',
 };
+
+/** Downloadable documents (asset kind `file`, schema 1.10+ download layers). */
+const FILE_MIMES = new Set([
+  'application/pdf',
+  'application/zip',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation',
+  'application/rtf',
+  'application/epub+zip',
+]);
 
 export function mimeOf(filename: string): string {
   return MIME[path.extname(filename).toLowerCase()] ?? 'application/octet-stream';
 }
 
-/** Asset kind as the gateway understands it (image/video/audio/font), plus text and other. */
+/** Asset kind as the gateway understands it (image/video/audio/font/file), plus text and other. */
 export function kindOfMime(mime: string): FileKind {
   if (mime.startsWith('image/')) return 'image';
   if (mime.startsWith('video/')) return 'video';
   if (mime.startsWith('audio/')) return 'audio';
   if (mime.startsWith('font/')) return 'font';
+  if (FILE_MIMES.has(mime)) return 'file';
   if (mime.startsWith('text/') || ['application/json', 'application/xml', 'application/yaml', 'application/x-subrip'].includes(mime)) return 'text';
   return 'other';
 }
