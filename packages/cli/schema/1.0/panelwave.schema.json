@@ -2784,6 +2784,11 @@
                      "type":"integer",
                      "minimum":0,
                      "description":"Initial position."
+                  },
+                  "keepPlaying":{
+                     "type":"boolean",
+                     "default":false,
+                     "description":"Keep playing when the reader moves to another panel or page (until the audio ends, the reader pauses it or another audio/video widget starts). Default: playback stops when the reader leaves the panel."
                   }
                }
             }

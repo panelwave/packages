@@ -960,6 +960,11 @@ export interface AudioPlayerLayer extends WidgetLayerCommon {
   /** Lower music and ambient audio while playing. Default true. */
   duckMusic?: boolean;
   startAtMs?: number;
+  /**
+   * Keep playing when the reader moves to another panel or page, until the audio ends, the reader pauses it or
+   * another audio/video widget starts. Default false: playback stops when the reader leaves the panel.
+   */
+  keepPlaying?: boolean;
 }
 
 export type VideoPlayerTrigger = 'poster' | 'button';
