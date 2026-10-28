@@ -3626,6 +3626,13 @@
                "$ref":"#/$defs/JsonLogic",
                "description":"Story-logic visibility condition (e.g. show a clue bubble once a variable is set). Since schema 1.3, every speech bubble is implicitly subject to the reader's global speech toggle (initial state: settings.ui.speechDefault) — the toggle is ANDed on top of this condition by the player. Do NOT encode the speech preference here (no {\"var\":\"prefs.speech\"} boilerplate); a bubble without visibleIf is simply always eligible while speech is on."
             },
+            "showAtMs":{
+               "type":"integer",
+               "minimum":0,
+               "maximum":120000,
+               "default":0,
+               "description":"When the balloon appears, in milliseconds on its panel's clock (schema 1.10+). 0 (default): with the panel. The clock starts when the panel is shown - panel view: when it becomes the current panel; page and canvas view: when it scrolls into view - except on a panel with an on-view video layer, where it starts when that video starts playing and pauses while the video is paused or buffering, so the dialogue follows the clip (with an on-click or on-hover video it starts with the reader's click or hover). A balloon with a later time is hidden until then and then fades in; once shown it stays (a looping video does not replay the dialogue). Entering the panel again restarts the clock. Reduced-motion and print renders show every balloon at once. visibleIf and the reader's speech toggle apply as usual. Players without timing support show all balloons immediately."
+            },
             "tail":{
                "type":"object",
                "description":"Editor-computed balloon tail geometry (tip/anchor points, width)."

@@ -1104,6 +1104,14 @@ export interface SpeechBubble {
   styleRef?: Identifier;
   balloonConfig?: BalloonConfigOverride;
   visibleIf?: JsonLogic;
+  /**
+   * When the balloon appears, in ms on its panel's clock (schema 1.10+, integer
+   * 0–120000; 0 or absent = with the panel). The clock starts when the panel is
+   * shown, or — on a panel with an on-view video layer — when that video starts
+   * playing, and pauses with the video. Later balloons fade in and stay;
+   * reduced-motion and print renders show every balloon at once.
+   */
+  showAtMs?: number;
   /** Editor-computed balloon tail geometry (tip/anchor points, width). */
   tail?: Record<string, unknown>;
   /** Editor tail style preset (e.g. "normal"). */
