@@ -2687,6 +2687,15 @@
             "themeOverrides":{
                "$ref":"#/$defs/ThemeColors",
                "description":"Per-layer colour overrides (rare). Fonts and shape are work-wide only."
+            },
+            "print":{
+               "type":"string",
+               "enum":[
+                  "card",
+                  "hide"
+               ],
+               "default":"card",
+               "description":"How print renders (PDF export) show the widget, which cannot be used on paper. card: a static card in the widget's box (title, details; the export can add a QR code that opens the panel in the online reader). hide: left out, the artwork shows through."
             }
          }
       },

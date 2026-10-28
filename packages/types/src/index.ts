@@ -932,7 +932,14 @@ export interface WidgetLayerCommon extends LayerCommon {
   appearance?: WidgetAppearance;
   /** Per-layer colour overrides (rare). Fonts and shape are work-wide only. */
   themeOverrides?: ThemeColors;
+  /**
+   * Print renders (PDF export): `card` (default) shows a static card — the export can add a QR code that opens the
+   * panel in the online reader; `hide` leaves the widget out.
+   */
+  print?: WidgetPrint;
 }
+
+export type WidgetPrint = 'card' | 'hide';
 
 /** A downloadable file shown as a card with icon, name and size. */
 export interface DownloadLayer extends WidgetLayerCommon {
