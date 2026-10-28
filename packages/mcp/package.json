@@ -1,6 +1,6 @@
 {
   "name": "@panelwave/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local MCP bridge for PanelWave: connects Claude Desktop, Claude Code, Cursor and other MCP clients to the hosted PanelWave MCP server and adds local file tools (list, read, upload a folder of panels).",
   "main": "dist/index.js",
   "bin": {
