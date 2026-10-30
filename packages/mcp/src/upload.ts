@@ -37,8 +37,34 @@ async function readRange(file: string, offset: number, length: number): Promise<
   }
 }
 
-/** Call a hosted tool and return its structured result; an isError result is re-raised with the remote code. */
-export async function remoteData(call: RemoteCaller, name: string, args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
+/** RATE_LIMITED answers are waited out this many times (each wait capped) before the error surfaces. */
+export const RATE_LIMIT_RETRIES = 6;
+const RATE_LIMIT_MAX_WAIT_MS = 65_000;
+
+/**
+ * Call a hosted tool and return its structured result; an isError result is re-raised with the remote code.
+ * A RATE_LIMITED answer is retried after the server's `retryAfterMs`: a folder upload makes two calls per
+ * file, so a batch of 30+ files would otherwise hit the upload bucket and fail half-way.
+ */
+export async function remoteData(
+  call: RemoteCaller,
+  name: string,
+  args: Record<string, unknown>,
+  signal?: AbortSignal,
+  sleepFn: (ms: number, signal?: AbortSignal) => Promise<void> = sleep,
+): Promise<Record<string, unknown>> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await remoteDataOnce(call, name, args, signal);
+    } catch (e) {
+      if (!(e instanceof BridgeError) || e.code !== 'RATE_LIMITED' || attempt >= RATE_LIMIT_RETRIES) throw e;
+      const after = Number((e.details as { retryAfterMs?: unknown } | undefined)?.retryAfterMs);
+      await sleepFn(Math.min(Number.isFinite(after) && after > 0 ? after : 5_000, RATE_LIMIT_MAX_WAIT_MS), signal);
+    }
+  }
+}
+
+async function remoteDataOnce(call: RemoteCaller, name: string, args: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
   let res: RemoteResult;
   try {
     res = await call(name, args, signal);
@@ -57,7 +83,8 @@ export async function remoteData(call: RemoteCaller, name: string, args: Record<
   if (res.isError) {
     const code = isBridgeErrorCode(body.code) ? body.code : 'INTERNAL';
     const text = (res.content as Array<{ type?: string; text?: string }> | undefined)?.find((c) => c.type === 'text')?.text;
-    throw new BridgeError(code, String(body.message ?? text ?? `${name} failed`), body.details);
+    const details = body.retryAfterMs !== undefined ? { ...((body.details as object | undefined) ?? {}), retryAfterMs: body.retryAfterMs } : body.details;
+    throw new BridgeError(code, String(body.message ?? text ?? `${name} failed`), details);
   }
   return body;
 }

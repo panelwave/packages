@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { assertUploadTarget, safeUploadHeaders, sha256File, uploadBatch, uploadFiles, type UploadRow } from '../src/upload';
+import { assertUploadTarget, RATE_LIMIT_RETRIES, remoteData, safeUploadHeaders, sha256File, uploadBatch, uploadFiles, type UploadRow } from '../src/upload';
 import type { LocalToolContext } from '../src/tool';
 import { FakeGateway, MockS3 } from './helpers/fake-gateway';
 import { jpegBytes, pngBytes } from './helpers/images';
@@ -71,6 +71,27 @@ beforeEach(() => {
   gw = new FakeGateway(s3);
 });
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+
+describe('remoteData — rate limits', () => {
+  const limited = { isError: true, structuredContent: { code: 'RATE_LIMITED', message: 'Too many upload calls (limit 60 per minute).', retryAfterMs: 1234 }, content: [] };
+  const ok = { structuredContent: { assetId: 'a1' }, content: [] };
+
+  it('waits the server’s retryAfterMs and retries a RATE_LIMITED call', async () => {
+    const answers = [limited, limited, ok];
+    const waits: number[] = [];
+    const call = jest.fn(async () => answers.shift()!);
+    const out = await remoteData(call as never, 'pw_assets_begin_upload', {}, undefined, async (ms) => void waits.push(ms));
+    expect(out).toEqual({ assetId: 'a1' });
+    expect(call).toHaveBeenCalledTimes(3);
+    expect(waits).toEqual([1234, 1234]);
+  });
+
+  it('gives up with RATE_LIMITED after RATE_LIMIT_RETRIES waits', async () => {
+    const call = jest.fn(async () => limited);
+    await expect(remoteData(call as never, 'pw_assets_begin_upload', {}, undefined, async () => undefined)).rejects.toMatchObject({ code: 'RATE_LIMITED', details: { retryAfterMs: 1234 } });
+    expect(call).toHaveBeenCalledTimes(RATE_LIMIT_RETRIES + 1);
+  });
+});
 
 describe('pw_local_upload_files — single uploads', () => {
   it('uploads only to https or loopback http, and never forwards credential headers', () => {
