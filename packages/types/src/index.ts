@@ -1,7 +1,7 @@
 /**
  * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.7 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.10.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.11.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -284,6 +284,14 @@ export interface ImageVariant {
   w: number;
   h: number;
   density?: number;
+  /**
+   * Language version (schema 1.11+): the artwork for readers of this locale
+   * (a sign or lettering drawn into the image). Variants without a locale
+   * serve every language; consumers narrow to the reader's language
+   * (exact → base language → no locale → meta.default_locale → all) before
+   * choosing by width or density.
+   */
+  locale?: LocaleCode;
 }
 
 export interface AudioVariant {

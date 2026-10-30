@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.10.0",
+   "title":"PanelWave Manifest 1.11.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -729,6 +729,10 @@
                "type":"number",
                "minimum":0.5,
                "maximum":4
+            },
+            "locale":{
+               "$ref":"#/$defs/LocaleCode",
+               "description":"Language version (schema 1.11+): this variant shows the artwork for readers of this locale — a sign, a title card or lettering drawn into the image. Variants without locale serve every language. Consumers narrow an image's variants to one language before choosing by width or density: the reader's exact locale, else the same base language (de-AT reader -> de-DE), else the variants without locale, else meta.default_locale, else all variants. Each language version may carry its own width ladder. Players before 1.11 ignore the field and pick among all variants, so keep the language-neutral (or default-language) variants first."
             }
          }
       },
