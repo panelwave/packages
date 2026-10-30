@@ -150,7 +150,7 @@ export interface TailConfig {
   enabled?: boolean;
   /** Degrees 0-359 (compass: 0=top, 90=right, 180=bottom, 270=left) */
   position?: number;
-  /** Length in pixels (0-500) */
+  /** Length in pixels (0-2000; 0-500 before schema 1.11) */
   length?: number;
   curve?: TailCurve;
   /** 0 = straight, 1 = max curve */

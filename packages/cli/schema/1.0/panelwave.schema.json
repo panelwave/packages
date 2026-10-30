@@ -3879,7 +3879,7 @@
                   "length":{
                      "type":"number",
                      "minimum":0,
-                     "maximum":500
+                     "maximum":2000
                   },
                   "curve":{
                      "type":"string",
@@ -3935,9 +3935,9 @@
             "length":{
                "type":"number",
                "minimum":0,
-               "maximum":500,
+               "maximum":2000,
                "default":45,
-               "description":"Tail length in pixels"
+               "description":"Tail length in pixels (maximum 2000 since schema 1.11; 500 before). Long tails reach a speaker across a wide panel."
             },
             "curve":{
                "type":"string",
