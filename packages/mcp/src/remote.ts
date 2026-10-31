@@ -7,6 +7,8 @@ import {
   UnauthorizedError,
   type CallToolResult,
   type FetchLike,
+  type GetPromptResult,
+  type Prompt,
   type ReadResourceResult,
   type Resource,
   type Tool,
@@ -252,6 +254,25 @@ export class RemoteProxy {
 
   async readResource(uri: string, signal?: AbortSignal): Promise<ReadResourceResult> {
     return this.withClient(`resources/read ${uri}`, (c) => c.readResource({ uri }, { signal }));
+  }
+
+  /** Remote prompts (getting-started, create-work-from-script, …); [] when the remote offers none. */
+  async listPrompts(): Promise<Prompt[]> {
+    return this.withClient('prompts/list', async (c) => {
+      if (!c.getServerCapabilities()?.prompts) return [];
+      const all: Prompt[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await c.listPrompts(cursor ? { cursor } : undefined);
+        all.push(...page.prompts);
+        cursor = page.nextCursor;
+      } while (cursor);
+      return all;
+    });
+  }
+
+  async getPrompt(name: string, args: Record<string, string> | undefined, signal?: AbortSignal): Promise<GetPromptResult> {
+    return this.withClient(`prompts/get ${name}`, (c) => c.getPrompt({ name, arguments: args ?? {} }, { signal }));
   }
 
   async close(): Promise<void> {

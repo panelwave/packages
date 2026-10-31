@@ -1,0 +1,44 @@
+{
+  "manifest_version": "0.3",
+  "name": "panelwave",
+  "display_name": "PanelWave",
+  "version": "0.0.0",
+  "description": "Build, letter, translate and publish interactive graphic novels in PanelWave, and upload artwork from folders on this computer.",
+  "long_description": "PanelWave is a CMS for interactive graphic novels. This extension connects Claude Desktop to your PanelWave account: the assistant can turn a script into a work, upload a folder of panel artwork and attach it to the right panels, letter balloons, add languages and translations, run the preflight checks and publish review links. It works as you, with your team roles and plan limits, and asks before anything destructive or public. The artwork always comes from you.",
+  "author": { "name": "PanelWave", "url": "https://panelwave.org" },
+  "homepage": "https://panelwave.org",
+  "documentation": "https://docs.panelwave.org/cms/integrations/local-bridge",
+  "support": "https://docs.panelwave.org/cms/integrations/mcp-overview",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js", "${user_config.folders}"],
+      "env": { "PANELWAVE_TOKEN": "${user_config.token}" }
+    }
+  },
+  "user_config": {
+    "token": {
+      "type": "string",
+      "title": "PanelWave access token",
+      "description": "Create one in PanelWave under Profile → Connected apps & access tokens (it starts with pw_pat_). Stored in your system's secret vault.",
+      "sensitive": true,
+      "required": true
+    },
+    "folders": {
+      "type": "directory",
+      "title": "Comics folders",
+      "description": "Folders with your scripts and artwork that the assistant may read and upload from. Leave empty to use PanelWave without local files.",
+      "multiple": true,
+      "required": false
+    }
+  },
+  "keywords": ["panelwave", "graphic novel", "comics", "mcp", "claude"],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=20.0.0" }
+  }
+}

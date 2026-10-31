@@ -51,3 +51,7 @@ Thumbs.db
 
 # Canonical schema checkout used by CI
 .schema/
+
+# Claude Desktop bundle build output (packages/mcp)
+packages/mcp/mcpb-build/
+packages/mcp/mcpb-dist/
