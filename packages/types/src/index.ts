@@ -532,6 +532,8 @@ export interface UIDefaults {
   speechDefault?: boolean;
   audioDefault?: boolean;
   sfxDefault?: boolean;
+  /** Initial state of the reader's Voices toggle (schema 1.12+): spoken lines (speech-bubble audio) and voiceover tracks. @default true */
+  voicesDefault?: boolean;
   scrollingDefault?: boolean;
   /** Work-level default for VideoLayer `playMode`, used when a layer does not specify its own. @default 'once' */
   videoPlayModeDefault?: VideoPlayMode;
@@ -1578,6 +1580,8 @@ export interface UIControls {
   showAutoplayToggle?: boolean;
   showSfxToggle?: boolean;
   showSpeechToggle?: boolean;
+  /** Show the reader's Voices toggle (schema 1.12+). @default true */
+  showVoicesToggle?: boolean;
   showToc?: boolean;
   showThumbnails?: boolean;
 }

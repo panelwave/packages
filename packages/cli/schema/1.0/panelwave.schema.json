@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.11.0",
+   "title":"PanelWave Manifest 1.12.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -769,7 +769,8 @@
                "default":false
             },
             "locale":{
-               "$ref":"#/$defs/LocaleCode"
+               "$ref":"#/$defs/LocaleCode",
+               "description":"Language of this rendition (a voice-over, a dubbed line). Variants without locale serve every language. Consumers narrow an audio asset's variants to one language before choosing a playable one: the reader's exact locale, else the same base language (de-AT reader -> de-DE), else the variants without locale, else meta.default_locale, else all variants (schema 1.12 spells out the rule; the field exists since 1.0)."
             }
          }
       },
@@ -1390,6 +1391,11 @@
                   "sfxDefault":{
                      "type":"boolean",
                      "default":true
+                  },
+                  "voicesDefault":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Initial state of the reader's Voices toggle (schema 1.12+): whether spoken lines play - the audio of a speech bubble (SpeechBubble.audioAssetId) when its balloon appears, and voiceover tracks. A reader can turn voices off, or keep them on and hide the balloons (the Speech toggle only hides balloons). Players before 1.12 ignore the field and gate voiceover audio by the speech toggle."
                   },
                   "scrollingDefault":{
                      "type":"boolean",
@@ -3612,7 +3618,8 @@
                "$ref":"#/$defs/LocalizedString"
             },
             "audioAssetId":{
-               "$ref":"#/$defs/Identifier"
+               "$ref":"#/$defs/Identifier",
+               "description":"The bubble's spoken line: an audio asset of the catalog (role voiceover). A line recorded or generated per language lists one AudioVariant per locale on that one asset (AudioVariant.locale, e.g. en-US and de-DE); players narrow the variants to the reader's language before picking a playable one (exact locale, same base language, variants without locale, meta.default_locale, all). Since schema 1.12 players play the line when the balloon appears (showAtMs on the panel clock), one bubble after another in array order, while the reader's Voices toggle (settings.ui.voicesDefault) is on; activating the balloon replays it."
             },
             "shape":{
                "$ref":"#/$defs/BoundingBox",
@@ -4919,6 +4926,11 @@
                   "showSpeechToggle":{
                      "type":"boolean",
                      "default":true
+                  },
+                  "showVoicesToggle":{
+                     "type":"boolean",
+                     "default":true,
+                     "description":"Show the reader's Voices toggle (schema 1.12+)."
                   },
                   "showToc":{
                      "type":"boolean",
