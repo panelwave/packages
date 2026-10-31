@@ -35,7 +35,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.c
   const token = (env.PANELWAVE_TOKEN ?? '').trim();
   if (!token) {
     throw new ConfigError(
-      'PANELWAVE_TOKEN is not set. Create a personal access token in PanelWave (Profile → Connected apps & access tokens) and add it to the "env" of this MCP server in your client configuration.',
+      'PANELWAVE_TOKEN is not set. Run `npx -y @panelwave/mcp setup` to connect this computer, or create a personal access token in PanelWave (Profile → Connected apps & access tokens) and add it to the "env" of this MCP server in your client configuration.',
     );
   }
   const url = (env.PANELWAVE_MCP_URL ?? '').trim() || DEFAULT_URL;
@@ -54,13 +54,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.c
     .filter(Boolean);
   // No default folder: without PANELWAVE_ALLOWED_DIRS the local tools are off. Clients often start stdio
   // servers in the home folder or "/", which would expose everything (security review 2026-09-30).
+  const allowedDirs = validateAllowedDirs(dirs, cwd);
+  return { url: parsed.toString(), token, allowedDirs, version };
+}
+
+/**
+ * Resolve the folders the local tools may read and refuse a drive root or the
+ * whole home folder. Shared by the bridge start-up and `setup`, which writes
+ * the folders into the client configuration.
+ */
+export function validateAllowedDirs(dirs: string[], cwd: string, home = os.homedir(), platform: NodeJS.Platform = process.platform): string[] {
   const allowedDirs = dirs.map((d) => path.resolve(cwd, d));
-  const home = path.resolve(os.homedir());
-  const same = (a: string, b: string) => (process.platform === 'win32' || process.platform === 'darwin' ? a.toLowerCase() === b.toLowerCase() : a === b);
+  const homeDir = path.resolve(home);
+  const same = (a: string, b: string) => (platform === 'win32' || platform === 'darwin' ? a.toLowerCase() === b.toLowerCase() : a === b);
   for (const d of allowedDirs) {
-    if (path.parse(d).root === d || same(d.replace(/[\\/]+$/, ''), home)) {
+    if (path.parse(d).root === d || same(d.replace(/[\\/]+$/, ''), homeDir)) {
       throw new ConfigError(`PANELWAVE_ALLOWED_DIRS must name the folders with your comics, not a drive root or your whole home folder (${d}).`);
     }
   }
-  return { url: parsed.toString(), token, allowedDirs, version };
+  return allowedDirs;
 }

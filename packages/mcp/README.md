@@ -12,6 +12,20 @@ The bridge mirrors the hosted server. Tool names, schemas, results and errors pa
 
 ## Quick start
 
+The fastest way is the setup command. Paste this into your coding agent (Claude Code, Cursor, Codex, Cowork), or run the command yourself in the folder with your scripts and artwork:
+
+```
+Set up PanelWave for me: run `npx -y @panelwave/mcp@latest setup` and follow what it prints.
+```
+
+The command asks PanelWave for an approval link, you approve once in your browser (signed in to PanelWave), and the token is written straight into the configuration of the clients found on your computer: never printed, never pasted through a chat. It also writes a short brief for your agent into `AGENTS.md`. Afterwards restart the client (or run `/mcp` in Claude Code) and ask the assistant what to build.
+
+- `npx -y @panelwave/mcp setup --help` lists the options: `--client`, `--dirs`, `--scopes`, `--renew` (replace the token or widen permissions), `--remote`, `--scaffold`, `--no-wait`.
+- `npx -y @panelwave/mcp status` shows what is configured and whether the token still works; `npx -y @panelwave/mcp doctor` checks Node, npx, clients, folders and the server, with a fix for each failure.
+- The setup page in PanelWave (**Home → Connect an AI assistant**) shows the request to approve and the assistant's first tool call live.
+
+To set it up by hand instead:
+
 1. Create a personal access token in PanelWave: **Profile → Connected apps & access tokens**. Tokens start with `pw_pat_`. For the script-to-work flow below, tick `works:read`, `works:write`, `assets:read` and `assets:write`.
 2. Install Node.js 20 or newer.
 3. Add the bridge to your client as shown below. Set `PANELWAVE_ALLOWED_DIRS` to the folder that holds your scripts and artwork.
@@ -134,7 +148,7 @@ The result has one row per file with the status `uploaded`, `exists`, `failed` o
 
 Tool errors come back as results with `isError: true` and a structured body `{ code, message }`. The codes are the same as on the hosted server:
 
-- **`UNAUTHENTICATED`** means PanelWave rejected the token because it expired, was revoked or was mistyped. Create a new token and update the client configuration.
+- **`UNAUTHENTICATED`** means PanelWave rejected the token because it expired, was revoked or was mistyped. Run `npx -y @panelwave/mcp setup --renew`, or create a new token and update the client configuration.
 - **`UPSTREAM_UNAVAILABLE`** means the hosted server or the upload storage is unreachable. The list and read tools keep working. The bridge retries in the background and announces the PanelWave tools once it reaches the server.
 - **`INVALID_INPUT`**, **`NOT_FOUND`** and **`PRECONDITION_FAILED`** come from the local tools, for example for a path outside the allowed folders, a missing file or a binary file.
 - **`QUOTA_EXCEEDED`**, **`PERMISSION_DENIED`** and other hosted codes are passed through unchanged, also inside upload rows.
