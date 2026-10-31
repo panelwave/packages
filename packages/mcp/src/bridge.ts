@@ -53,7 +53,7 @@ export function createBridgeServer(opts: BridgeOptions): Server {
   const server = new Server(
     { name: 'panelwave', title: 'PanelWave', version: config.version },
     {
-      capabilities: { tools: { listChanged: true }, resources: { listChanged: true } },
+      capabilities: { tools: { listChanged: true }, resources: { listChanged: true }, prompts: {} },
       instructions,
     },
   );
@@ -125,6 +125,24 @@ export function createBridgeServer(opts: BridgeOptions): Server {
   server.setRequestHandler('resources/read', async (request, ctx) => {
     try {
       return await remote.readResource(request.params.uri, ctx.mcpReq.signal);
+    } catch (e) {
+      throw asProtocolError(e);
+    }
+  });
+
+  // Prompts (getting-started, create-work-from-script, …) pass through like tools and resources.
+  server.setRequestHandler('prompts/list', async () => {
+    try {
+      return { prompts: await remote.listPrompts() };
+    } catch (e) {
+      log(`remote prompts unavailable: ${e instanceof Error ? e.message : String(e)}`);
+      return { prompts: [] };
+    }
+  });
+
+  server.setRequestHandler('prompts/get', async (request, ctx) => {
+    try {
+      return await remote.getPrompt(request.params.name, request.params.arguments as Record<string, string> | undefined, ctx.mcpReq.signal);
     } catch (e) {
       throw asProtocolError(e);
     }

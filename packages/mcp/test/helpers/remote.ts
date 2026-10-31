@@ -9,7 +9,7 @@ export const REMOTE_INSTRUCTIONS = 'PanelWave is a CMS for interactive graphic n
 export function fakeRemote(): McpServer {
   const s = new McpServer(
     { name: 'panelwave-gateway', version: '9.9.9' },
-    { capabilities: { tools: { listChanged: true }, resources: { listChanged: true } }, instructions: REMOTE_INSTRUCTIONS },
+    { capabilities: { tools: { listChanged: true }, resources: { listChanged: true }, prompts: {} }, instructions: REMOTE_INSTRUCTIONS },
   );
   s.registerTool(
     'pw_meta_whoami',
@@ -40,6 +40,9 @@ export function fakeRemote(): McpServer {
     }
     return { content: [{ type: 'text', text: `done after ${steps}` }] };
   });
+  s.registerPrompt('getting-started', { title: 'Get started', description: 'The brief.', argsSchema: z.object({ topic: z.string().optional() }) }, async ({ topic }) => ({
+    messages: [{ role: 'user', content: { type: 'text', text: `brief${topic ? ` about ${topic}` : ''}` } }],
+  }));
   s.registerResource('outline-schema', 'panelwave://schema/outline', { title: 'Outline schema', mimeType: 'application/schema+json' }, async (uri) => ({
     contents: [{ uri: uri.href, mimeType: 'application/schema+json', text: '{"type":"object"}' }],
   }));

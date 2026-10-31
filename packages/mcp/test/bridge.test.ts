@@ -44,6 +44,13 @@ describe('bridge over an in-memory remote', () => {
     await bridge.close();
   });
 
+  it('forwards remote prompts (list and get) unchanged', async () => {
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((p) => p.name)).toEqual(['getting-started']);
+    const got = await client.getPrompt({ name: 'getting-started', arguments: { topic: 'balloons' } });
+    expect(got.messages[0].content).toMatchObject({ type: 'text', text: 'brief about balloons' });
+  });
+
   it('lists local tools first, then every remote tool with name and schemas untouched', async () => {
     const { tools } = await client.listTools();
     const remoteTools = (await direct.listTools()).tools;
