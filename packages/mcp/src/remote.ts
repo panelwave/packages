@@ -36,6 +36,8 @@ export interface RemoteProxyOptions {
   requestTimeoutMs?: number;
   /** Hard cap for one tool call including progress resets. Default 30 min. */
   maxCallMs?: number;
+  /** User-Agent of the default transport. Default `panelwave-mcp/<version>`; `setup` sends `panelwave-mcp-setup/<version>` for its check call. */
+  userAgent?: string;
 }
 
 export interface CallOptions {
@@ -87,7 +89,7 @@ export class RemoteProxy {
   private transport(): Transport {
     if (this.opts.transportFactory) return this.opts.transportFactory();
     return new StreamableHTTPClientTransport(new URL(this.opts.url), {
-      requestInit: { headers: { Authorization: `Bearer ${this.opts.token}`, 'User-Agent': `panelwave-mcp/${this.opts.version}` } },
+      requestInit: { headers: { Authorization: `Bearer ${this.opts.token}`, 'User-Agent': this.opts.userAgent ?? `panelwave-mcp/${this.opts.version}` } },
       ...(this.opts.fetch ? { fetch: this.opts.fetch } : {}),
     });
   }
@@ -148,7 +150,7 @@ export class RemoteProxy {
       this.drop();
       return new BridgeError(
         'UNAUTHENTICATED',
-        'PanelWave rejected PANELWAVE_TOKEN (expired, revoked or mistyped). Create a new personal access token in PanelWave (Profile → Connected apps & access tokens) and update the MCP client configuration.',
+        'PanelWave rejected PANELWAVE_TOKEN (expired, revoked or mistyped). Run `npx -y @panelwave/mcp setup --renew` to connect again, or create a new personal access token in PanelWave (Profile → Connected apps & access tokens) and update the MCP client configuration.',
       );
     }
     if (status === 403) {
