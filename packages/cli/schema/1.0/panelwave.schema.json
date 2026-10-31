@@ -1394,8 +1394,8 @@
                   },
                   "voicesDefault":{
                      "type":"boolean",
-                     "default":true,
-                     "description":"Initial state of the reader's Voices toggle (schema 1.12+): whether spoken lines play - the audio of a speech bubble (SpeechBubble.audioAssetId) when its balloon appears, and voiceover tracks. A reader can turn voices off, or keep them on and hide the balloons (the Speech toggle only hides balloons). Players before 1.12 ignore the field and gate voiceover audio by the speech toggle."
+                     "default":false,
+                     "description":"Initial state of the reader's Voices toggle (schema 1.12+): whether spoken lines play - the audio of a speech bubble (SpeechBubble.audioAssetId) when its balloon appears, and voiceover tracks. Off by default (voices can be intrusive); a work with spoken lines sets it to true. A reader can switch voices on or off, and keep them on while hiding the balloons (the Speech toggle only hides balloons). Players before 1.12 ignore the field and gate voiceover audio by the speech toggle."
                   },
                   "scrollingDefault":{
                      "type":"boolean",
