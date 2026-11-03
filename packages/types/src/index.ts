@@ -1,7 +1,7 @@
 /**
  * @panelwave/types — Full TypeScript interfaces for the PanelWave 1.7 manifest format.
  *
- * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.11.0)
+ * Generated from: https://panelwave.org/schema/1.0/panelwave.schema.json (schema version 1.13.0)
  * JSON Schema Draft: 2020-12
  * License: MIT
  */
@@ -737,20 +737,36 @@ export interface PlacementOrigin {
   y?: NormalizedNumber;
 }
 
+/**
+ * A panel on a page. `x`/`y`/`w`/`h` describe the panel's IMAGE BOX (the
+ * artwork's aspect ratio, normalized to the page); the optional quartet
+ * `vx`/`vy`/`vw`/`vh` is the FRAME: the window of that box the page shows,
+ * at `(x + vx·w, y + vy·h, vw·w, vh·h)`. Players crop to the frame on every
+ * screen (schema 1.13+; player 1.5–2.0 cropped on phones only). The frame must
+ * lie on the page; the box may not (since 1.13.0 `x`/`y` ≥ −9, `w`/`h` ≤ 10),
+ * which is how an author enlarges and moves the artwork behind a fixed frame.
+ */
 export interface Placement {
   panelId: Identifier;
+  /** Left edge of the image box, normalized to the page width (−9 … 1). */
   x: number;
+  /** Top edge of the image box, normalized to the page height (−9 … 1). */
   y: number;
+  /** Width of the image box (1 = the page width; up to 10). */
   w: number;
+  /** Height of the image box (1 = the page height; up to 10). */
   h: number;
   z?: number;
   /** Rotation in degrees (-180 to 180) */
   r?: number;
   origin?: PlacementOrigin;
-  /** Visible-area crop (viewport into panel) */
+  /** Frame: left edge of the visible window as a fraction of the box (`vx + vw ≤ 1`). Omitted = whole box. */
   vx?: NormalizedNumber;
+  /** Frame: top edge of the visible window as a fraction of the box (`vy + vh ≤ 1`). */
   vy?: NormalizedNumber;
+  /** Frame width as a fraction of the box (zooming lowers it and raises `w`). */
   vw?: NormalizedNumber;
+  /** Frame height as a fraction of the box. */
   vh?: NormalizedNumber;
 }
 

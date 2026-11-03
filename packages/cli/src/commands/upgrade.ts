@@ -13,13 +13,13 @@ interface UpgradeStep {
   action: string;
 }
 
-const LATEST_VERSION = '1.12.0';
+const LATEST_VERSION = '1.13.0';
 const LATEST_SCHEMA_URI = 'https://panelwave.org/schema/1.0/panelwave.schema.json';
 
 /**
  * Apply schema migration steps.
- * Every 1.x minor (1.1 … 1.12) is additive, so a manifest from an older minor
- * (e.g. 1.11 → 1.12) needs no content change: only the version header is
+ * Every 1.x minor (1.1 … 1.13) is additive or relaxing, so a manifest from an
+ * older minor (e.g. 1.12 → 1.13) needs no content change: only the version header is
  * rewritten, plus the legacy draft normalisations below. A future breaking
  * version adds its migration logic here.
  */

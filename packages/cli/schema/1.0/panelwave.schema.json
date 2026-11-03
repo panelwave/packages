@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.12.0",
+   "title":"PanelWave Manifest 1.13.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -1740,27 +1740,27 @@
                      },
                      "x":{
                         "type":"number",
-                        "minimum":0,
+                        "minimum":-9,
                         "maximum":1,
-                        "description":"X position (normalized: 0 = left edge, 1 = right edge)"
+                        "description":"Left edge of the panel's image box (normalized to the page width: 0 = left edge, 1 = right edge). The box has the panel artwork's aspect ratio. Since 1.13.0 it may start left of the page (negative) when the placement is framed (vx/vy/vw/vh): the frame x + vx·w must lie on the page, the box may not."
                      },
                      "y":{
                         "type":"number",
-                        "minimum":0,
+                        "minimum":-9,
                         "maximum":1,
-                        "description":"Y position (normalized: 0 = top edge, 1 = bottom edge)"
+                        "description":"Top edge of the panel's image box (normalized to the page height). Since 1.13.0 it may be negative when the placement is framed; the frame y + vy·h must lie on the page."
                      },
                      "w":{
                         "type":"number",
                         "minimum":0.001,
-                        "maximum":2.0,
-                        "description":"Width (normalized: 0-1 = 0-100% of page width, >1 allows overflow)"
+                        "maximum":10,
+                        "description":"Width of the image box (normalized: 1 = the page width). Above 1 the box overflows the page; a framed placement zoomed into its artwork has w = frame width / vw (up to 10 since 1.13.0, 2 before)."
                      },
                      "h":{
                         "type":"number",
                         "minimum":0.001,
-                        "maximum":2.0,
-                        "description":"Height (normalized: 0-1 = 0-100% of page height, >1 allows overflow)"
+                        "maximum":10,
+                        "description":"Height of the image box (normalized: 1 = the page height). Above 1 the box overflows the page; a framed placement has h = frame height / vh (up to 10 since 1.13.0, 2 before)."
                      },
                      "z":{
                         "type":"integer",
@@ -1801,25 +1801,25 @@
                         "type":"number",
                         "minimum":0,
                         "maximum":1,
-                        "description":"Visible area X position relative to panel (normalized: 0 = left edge, 1 = right edge). If omitted, full panel is visible."
+                        "description":"Frame: left edge of the visible window, normalized to the image box (0 = the box's left edge). The frame (x + vx·w, y + vy·h, vw·w, vh·h) is the panel as the page shows it; players crop to it on every screen size (since 1.13.0; player 1.5–2.0 cropped on phones only). If omitted, the frame is the whole box."
                      },
                      "vy":{
                         "type":"number",
                         "minimum":0,
                         "maximum":1,
-                        "description":"Visible area Y position relative to panel (normalized: 0 = top edge, 1 = bottom edge). If omitted, full panel is visible."
+                        "description":"Frame: top edge of the visible window, normalized to the image box. See vx. If omitted, the frame is the whole box."
                      },
                      "vw":{
                         "type":"number",
                         "minimum":0.001,
                         "maximum":1,
-                        "description":"Visible area width (normalized: 0-1 = 0-100% of panel width). If omitted, full panel width is visible."
+                        "description":"Frame width as a fraction of the image box (1 = the whole box width). Zooming the artwork inside a fixed frame lowers vw and raises w (w·vw stays the frame width). vx + vw ≤ 1 so the image always covers the frame. If omitted, 1."
                      },
                      "vh":{
                         "type":"number",
                         "minimum":0.001,
                         "maximum":1,
-                        "description":"Visible area height (normalized: 0-1 = 0-100% of panel height). If omitted, full panel height is visible."
+                        "description":"Frame height as a fraction of the image box (1 = the whole box height). vy + vh ≤ 1 so the image always covers the frame. If omitted, 1."
                      }
                   }
                }

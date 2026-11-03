@@ -94,9 +94,45 @@ export function validateManifest(manifest: unknown, schemaVersion: string): Vali
     }
 
     checkCanvasSemantics(m, errors, warnings);
+    checkFrameSemantics(m, errors);
   }
 
   return { valid: valid === true && errors.length === 0, errors, warnings };
+}
+
+/**
+ * Framed page placements (schema 1.13): the frame `(x + vx·w, y + vy·h, vw·w, vh·h)`
+ * must lie on the page and the image box must cover it (`vx + vw ≤ 1`,
+ * `vy + vh ≤ 1`). The box itself may leave the page. JSON Schema cannot express
+ * these cross-field rules.
+ */
+const FRAME_EPSILON = 0.001;
+
+function checkFrameSemantics(m: Record<string, unknown>, errors: ValidationResult['errors']): void {
+  const chapters = Array.isArray(m.chapters) ? (m.chapters as Record<string, unknown>[]) : [];
+  chapters.forEach((chapter, ci) => {
+    const pages = Array.isArray(chapter?.pages) ? (chapter.pages as Record<string, unknown>[]) : [];
+    pages.forEach((page, pi) => {
+      const layout = page?.layout as Record<string, unknown> | undefined;
+      const placements = Array.isArray(layout?.placements) ? (layout!.placements as Record<string, unknown>[]) : [];
+      placements.forEach((pl, li) => {
+        const num = (k: string, d: number): number => (typeof pl?.[k] === 'number' ? (pl[k] as number) : d);
+        const x = num('x', 0), y = num('y', 0), w = num('w', 1), h = num('h', 1);
+        const vx = num('vx', 0), vy = num('vy', 0), vw = num('vw', 1), vh = num('vh', 1);
+        const at = `/chapters/${ci}/pages/${pi}/layout/placements/${li}`;
+        const push = (message: string) => errors.push({ path: at, message, keyword: 'frame' });
+        if (vx + vw > 1 + FRAME_EPSILON) push(`vx + vw must not exceed 1 (the image box must cover the frame); got ${vx} + ${vw}`);
+        if (vy + vh > 1 + FRAME_EPSILON) push(`vy + vh must not exceed 1 (the image box must cover the frame); got ${vy} + ${vh}`);
+        const fx = x + vx * w, fy = y + vy * h, fw = vw * w, fh = vh * h;
+        if (fx < -FRAME_EPSILON || fx + fw > 1 + FRAME_EPSILON) {
+          push(`the frame must lie on the page horizontally: frame x ${fx.toFixed(4)} … ${(fx + fw).toFixed(4)} (page 0 … 1)`);
+        }
+        if (fy < -FRAME_EPSILON || fy + fh > 1 + FRAME_EPSILON) {
+          push(`the frame must lie on the page vertically: frame y ${fy.toFixed(4)} … ${(fy + fh).toFixed(4)} (page 0 … 1)`);
+        }
+      });
+    });
+  });
 }
 
 /** Semantic canvas rules (schema 1.4) that JSON Schema cannot express structurally. */
