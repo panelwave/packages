@@ -7,7 +7,7 @@ export const BRIEF_END = '<!-- panelwave:end -->';
 
 /**
  * The agent brief (concept §10): what PanelWave is, how to start a session,
- * the three starting paths, checks, files and rules. `{{ALLOWED_DIRS}}` is
+ * the four starting paths, checks, files and rules. `{{ALLOWED_DIRS}}` is
  * replaced with the folders the local tools may read.
  */
 export const AGENT_BRIEF = `## PanelWave (interactive graphic novels)
@@ -29,7 +29,10 @@ Before doing anything, ask: what exists already (script, artwork, a work in Pane
 2. **Folder of panels → work.** Files are named by panel id (\`P017.png\`, \`P017-de-DE.png\`, \`P096-V2.png\`).
    \`pw_local_list_files\`, then \`pw_local_upload_files\` into one asset folder per chapter, then
    \`pw_panels_attach_artwork\` by key. Uploads are deduplicated; rerunning is safe.
-3. **Existing work → translate or polish.** \`pw_locales_set\` (form of address per language),
+3. **Finished pages → interactive work** (an AI generator's CBZ/PDF export, scans, lettered pages).
+   \`pw_local_import_pages\` (lettering \`editable\` to make the painted balloons editable), \`pw_jobs_get\` until
+   review, check \`pw_import_pages_status\`, fix with \`pw_import_pages_update\`, then \`pw_import_pages_finalize\`.
+4. **Existing work → translate or polish.** \`pw_locales_set\` (form of address per language),
    \`pw_translations_extract\`, \`pw_translations_machine_translate\`, \`pw_translations_set\`; machine text
    stays flagged for review. Translate before placing balloons: translated text is longer.
 

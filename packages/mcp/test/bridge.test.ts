@@ -54,8 +54,8 @@ describe('bridge over an in-memory remote', () => {
   it('lists local tools first, then every remote tool with name and schemas untouched', async () => {
     const { tools } = await client.listTools();
     const remoteTools = (await direct.listTools()).tools;
-    expect(tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', 'pw_local_upload_files', ...remoteTools.map((t) => t.name)]);
-    expect(tools.slice(3)).toEqual(remoteTools);
+    expect(tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', 'pw_local_upload_files', 'pw_local_import_pages', ...remoteTools.map((t) => t.name)]);
+    expect(tools.slice(4)).toEqual(remoteTools);
     const local = tools[0];
     expect(local.inputSchema).toMatchObject({ type: 'object', required: ['folder'] });
     expect(local.annotations).toMatchObject({ readOnlyHint: true });
@@ -231,7 +231,7 @@ describe('bridge when the remote is unavailable', () => {
     });
     const client = await connectClient(bridge.server, () => changed++);
     try {
-      expect((await client.listTools()).tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', 'pw_local_upload_files']);
+      expect((await client.listTools()).tools.map((t) => t.name)).toEqual(['pw_local_list_files', 'pw_local_read_text', 'pw_local_upload_files', 'pw_local_import_pages']);
       const r = await client.callTool({ name: 'pw_meta_whoami', arguments: {} });
       expect(r.isError).toBe(true);
       expect(r.structuredContent).toMatchObject({ code: 'UPSTREAM_UNAVAILABLE' });
