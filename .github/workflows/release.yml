@@ -92,6 +92,11 @@ jobs:
           tag_name: ${{ env.TAG }}
           name: "@panelwave/${{ inputs.package }} ${{ steps.bump.outputs.version }}"
           generate_release_notes: true
+          # Only mcp releases may become the repo's "latest" release: the CMS
+          # page "Connect an AI assistant" links
+          # releases/latest/download/panelwave.mcpb, which 404s whenever a
+          # types or cli release (no bundle) is latest.
+          make_latest: ${{ inputs.package == 'mcp' }}
           # Only the mcp release produces bundles; unmatched globs are ignored.
           files: |
             packages/mcp/mcpb-dist/panelwave.mcpb
