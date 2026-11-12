@@ -36,8 +36,8 @@
     "directory": "packages/mcp"
   },
   "dependencies": {
-    "@modelcontextprotocol/client": "^2.2.0",
-    "@modelcontextprotocol/server": "^2.2.0",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@modelcontextprotocol/server": "^2.4.0",
     "image-size": "^2.0.2",
     "zod": "^4.2.0"
   },

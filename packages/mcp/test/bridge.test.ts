@@ -266,3 +266,50 @@ describe('bridge when the remote is unavailable', () => {
     }
   });
 });
+
+describe('bridge and MCP Apps (io.modelcontextprotocol/ui)', () => {
+  const UI = 'ui://panelwave/player';
+  const CSP = { connectDomains: ['https://assets.test'], resourceDomains: ['https://mcp.test.local', 'https://assets.test'] };
+
+  /** The fake remote plus a UI-linked tool, an app-only tool and the ui:// resource, shaped like the gateway's. */
+  function appRemote() {
+    const s = fakeRemote();
+    s.registerTool(
+      'pw_works_preview',
+      { description: 'Preview.', inputSchema: z.object({ workId: z.string() }), _meta: { ui: { resourceUri: UI }, 'ui/resourceUri': UI } },
+      async ({ workId }) => ({ content: [{ type: 'text', text: `Preview of ${workId}` }], structuredContent: { workId } }),
+    );
+    s.registerTool(
+      'pw_preview_manifest',
+      { description: 'App only.', inputSchema: z.object({ workId: z.string() }), _meta: { ui: { resourceUri: UI, visibility: ['app'] } } },
+      async ({ workId }) => ({ content: [{ type: 'text', text: 'manifest' }], structuredContent: { manifest: { meta: { id: workId } } } }),
+    );
+    s.registerResource('player-app', UI, { title: 'Player', mimeType: 'text/html;profile=mcp-app' }, async (uri) => ({
+      contents: [{ uri: uri.href, mimeType: 'text/html;profile=mcp-app', text: '<!doctype html><html></html>', _meta: { ui: { csp: CSP, prefersBorder: false } } }],
+    }));
+    return s;
+  }
+
+  it('passes tool _meta.ui (resourceUri, visibility) and the ui:// resource with its CSP meta through untouched', async () => {
+    const remote = inMemoryRemote(appRemote);
+    const proxy = new RemoteProxy({ url: 'https://mcp.test.local/mcp', token: 't', version: 'test', transportFactory: remote.factory, log: quiet });
+    const bridge = await startBridge(testConfig(), { remote: proxy, log: quiet });
+    const client = await connectClient(bridge.server);
+    try {
+      const { tools } = await client.listTools();
+      const preview = tools.find((t) => t.name === 'pw_works_preview');
+      expect(preview?._meta).toEqual({ ui: { resourceUri: UI }, 'ui/resourceUri': UI });
+      expect(tools.find((t) => t.name === 'pw_preview_manifest')?._meta).toEqual({ ui: { resourceUri: UI, visibility: ['app'] } });
+
+      const read = await client.readResource({ uri: UI });
+      expect(read.contents[0]).toMatchObject({ uri: UI, mimeType: 'text/html;profile=mcp-app', _meta: { ui: { csp: CSP, prefersBorder: false } } });
+
+      // What the host relays from the page: a plain tools/call of the app-only tool.
+      const call = await client.callTool({ name: 'pw_preview_manifest', arguments: { workId: 'w1' } });
+      expect(call.structuredContent).toEqual({ manifest: { meta: { id: 'w1' } } });
+    } finally {
+      await client.close();
+      await bridge.close();
+    }
+  });
+});
