@@ -20,7 +20,7 @@ export async function sha256File(file: string, signal?: AbortSignal): Promise<st
   return hash.digest('hex');
 }
 
-async function readRange(file: string, offset: number, length: number): Promise<Buffer> {
+export async function readRange(file: string, offset: number, length: number): Promise<Buffer> {
   const handle = await fs.open(file, 'r');
   try {
     const buf = Buffer.alloc(length);
@@ -157,7 +157,7 @@ const RETRYABLE_STATUS = new Set([403, 408, 425, 429, 500, 502, 503, 504]);
  * supplies the URL — callers re-sign after an expired/refused URL (403).
  * Returns the ETag (may be empty) and the number of attempts used.
  */
-async function putWithRetry(
+export async function putWithRetry(
   opts: UploadOptions,
   label: string,
   target: (attempt: number, lastStatus?: number) => Promise<{ url: string; headers: Record<string, string> }>,

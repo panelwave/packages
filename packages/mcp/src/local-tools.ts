@@ -6,6 +6,7 @@ import { decodeUtf8, imageDimensions, kindOfMime, looksBinary, mimeOf, readHead,
 import { resolveAllowed } from './sandbox';
 import { defineLocalTool, formatBytes, mapLimit, type LocalTool } from './tool';
 import { uploadFiles } from './upload';
+import { importPages } from './import-pages';
 
 export type { LocalTool, LocalToolContext, LocalToolResult } from './tool';
 export { errorResult } from './tool';
@@ -154,4 +155,4 @@ export const readText = defineLocalTool({
   },
 });
 
-export const LOCAL_TOOLS: LocalTool[] = [listFiles, readText, uploadFiles];
+export const LOCAL_TOOLS: LocalTool[] = [listFiles, readText, uploadFiles, importPages];
