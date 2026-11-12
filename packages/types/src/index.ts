@@ -498,19 +498,42 @@ export interface Variables {
 // Settings
 // ---------------------------------------------------------------------------
 
-export type PanelBorderStyle = 'solid' | 'dashed' | 'dotted' | 'none';
+/**
+ * Line style of a panel border (schema `PanelBorderStyle.style`).
+ * `double`, `rough` (hand-inked) and `wavy` (dream outline) since 1.14.0.
+ */
+export type PanelBorderStyle = 'solid' | 'dashed' | 'dotted' | 'double' | 'rough' | 'wavy' | 'none';
 export type PreloadStrategy = 'none' | 'lookahead' | 'aggressive';
+
+/**
+ * The line around a panel (schema `$defs/PanelBorderStyle`, 1.14.0): the work
+ * default in `settings.typography.panel_border_style`, overridden field by
+ * field by `Panel.border`. Lengths are px of the page's output-format frame
+ * (A4 portrait 794×1123, mobile 375×667, desktop 1920×1080, …) and scale with
+ * the page. The line lies inside the panel frame, above artwork and balloons;
+ * `radius`, `rough` and `wavy` clip the artwork to the outline. Format
+ * defaults: `#000000`, thickness 2, `solid`, radius 0.
+ */
+export interface PanelBorder {
+  /** Line colour. Default `#000000`. */
+  color?: ColorHex;
+  /** Thickness in frame px, 0–10 (0 = no border). Default 2. An integer before 1.14.0. */
+  thickness?: number;
+  /** Default `solid`. */
+  style?: PanelBorderStyle;
+  /** Corner radius in frame px, 0–200 (1.14.0+); also rounds a borderless panel. Default 0. */
+  radius?: number;
+  /** Extension properties (x-*). */
+  [key: `x-${string}`]: unknown;
+}
 
 export interface TypographySettings {
   default_font?: string;
   default_font_size?: number;
   default_page_bg_color?: ColorHex;
   balloon_config?: BalloonConfig;
-  panel_border_style?: {
-    color?: ColorHex;
-    thickness?: number;
-    style?: PanelBorderStyle;
-  };
+  /** The work's panel border; `Panel.border` overrides it per field. Without it players use the format default (1.14.0+). */
+  panel_border_style?: PanelBorder;
   gutter_width?: number;
   /**
    * Named reusable text style presets (schema 1.3+), referenced by
@@ -1392,6 +1415,8 @@ export interface Panel {
   accessibility?: AccessibilityHints;
   shareable?: boolean;
   age_rating_override?: string;
+  /** This panel's border: fields set here override the work's `settings.typography.panel_border_style`. Since 1.14.0. */
+  border?: PanelBorder;
   variants?: PanelVariant[];
   preloadHints?: Identifier[];
   memoryBudgetHint?: number;

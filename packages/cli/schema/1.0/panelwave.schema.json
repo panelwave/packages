@@ -1,7 +1,7 @@
 {
    "$schema":"https://json-schema.org/draft/2020-12/schema",
    "$id":"https://panelwave.org/schema/1.0/panelwave.schema.json",
-   "title":"PanelWave Manifest 1.13.0",
+   "title":"PanelWave Manifest 1.14.0",
    "type":"object",
    "additionalProperties":false,
    "required":[
@@ -1312,26 +1312,8 @@
                      "description":"Default balloon styling for all speech bubbles in this work"
                   },
                   "panel_border_style":{
-                     "type":"object",
-                     "additionalProperties":false,
-                     "description":"Default styling for panel borders",
-                     "properties":{
-                        "color":{
-                           "$ref":"#/$defs/ColorHex"
-                        },
-                        "thickness":{
-                           "type":"integer",
-                           "minimum":0,
-                           "maximum":10,
-                           "default":1,
-                           "description":"Border thickness in pixels"
-                        },
-                        "style":{
-                           "type":"string",
-                           "enum":["solid", "dashed", "dotted", "none"],
-                           "default":"solid"
-                        }
-                     }
+                     "$ref":"#/$defs/PanelBorderStyle",
+                     "description":"The work's panel border: the line players draw around every panel in page, panel and canvas view (and that print exports show). Panel.border overrides it field by field. Fields left out use the format default (#000000, thickness 2, solid, radius 0); a work without this object gets that default too (since 1.14.0 — players before 1.14 drew no configured border)."
                   },
                   "gutter_width":{
                      "type":"integer",
@@ -2358,6 +2340,10 @@
             "age_rating_override":{
                "type":"string"
             },
+            "border":{
+               "$ref":"#/$defs/PanelBorderStyle",
+               "description":"This panel's border (1.14.0+): each field set here overrides the work's settings.typography.panel_border_style; fields left out inherit it. thickness 0 or style 'none' = no border for this panel."
+            },
             "variants":{
                "type":"array",
                "description":"Conditional content variants, evaluated in order — the first whose `when` matches applies (base panel when none match).",
@@ -2388,6 +2374,40 @@
          "patternProperties":{
             "^x-":{
                
+            }
+         }
+      },
+      "PanelBorderStyle":{
+         "title":"Panel Border Style",
+         "type":"object",
+         "additionalProperties":false,
+         "description":"The line around a panel (1.14.0+). Lengths are px of the page's output-format frame — the page at its authoring size: a4-portrait 794×1123, a4-landscape 1123×794, us-portrait 816×1056, us-landscape 1056×816, mobile-portrait 375×667, tablet-portrait 768×1024, square 1024×1024, flex-landscape 1280×800, desktop-landscape and video-16-9 1920×1080, bigscreen-landscape 3840×2160 — so the line scales with the page: page view multiplies by rendered page width ÷ frame width; panel view by the scale the page would have on the same screen (min(viewport width ÷ frame width, viewport height ÷ frame height)); canvas view treats them as world px. The line lies inside the panel frame (its outer edge is the frame edge) and is drawn above the artwork and the balloons. A radius, 'rough' and 'wavy' change the panel's outline: players clip the artwork to it. 'rough' and 'wavy' are seeded by the panel id so a panel looks the same on every render. Players that do not know a style draw 'solid'.",
+         "properties":{
+            "color":{
+               "$ref":"#/$defs/ColorHex",
+               "description":"Line colour. Default #000000."
+            },
+            "thickness":{
+               "type":"number",
+               "minimum":0,
+               "maximum":10,
+               "description":"Line thickness in frame px (see above). 0 = no border. Default 2. (An integer before 1.14.0.)"
+            },
+            "style":{
+               "type":"string",
+               "enum":["solid", "dashed", "dotted", "double", "rough", "wavy", "none"],
+               "description":"solid: one line. dashed: dashes 3×thickness long, gaps 2×. dotted: round dots of the line's thickness, 2×thickness apart. double: two lines of the thickness with a gap of the thickness. rough: a hand-inked, slightly wobbly line. wavy: an undulating dream/cloud outline. none: no line. Default solid. (double, rough and wavy since 1.14.0.)"
+            },
+            "radius":{
+               "type":"number",
+               "minimum":0,
+               "maximum":200,
+               "description":"Corner radius in frame px (1.14.0+); rounds the line and clips the artwork's corners, also when the panel has no line. Default 0."
+            }
+         },
+         "patternProperties":{
+            "^x-":{
+
             }
          }
       },
