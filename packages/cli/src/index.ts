@@ -5,6 +5,7 @@ import { validateCommand } from './commands/validate';
 import { bundleCommand } from './commands/bundle';
 import { diffCommand } from './commands/diff';
 import { upgradeCommand } from './commands/upgrade';
+import { verifyPackageCommand } from './commands/verify-package';
 
 const pkg = require('../package.json');
 
@@ -12,7 +13,7 @@ const program = new Command();
 
 program
   .name('panelwave')
-  .description('PanelWave CLI — validate, bundle, diff, and upgrade manifests')
+  .description('PanelWave CLI — validate, bundle, diff, and upgrade manifests; verify channel packages')
   .version(pkg.version);
 
 program
@@ -43,5 +44,14 @@ program
   .option('-o, --output <file>', 'Output file path (default: overwrite in-place)')
   .option('--dry-run', 'Show changes without writing', false)
   .action(upgradeCommand);
+
+program
+  .command('verify-package <target>')
+  .description('Verify a channel package (folder or URL): the PanelWave signature of package-manifest.json and the size and SHA-256 of every file')
+  .option('-k, --keys <file|url>', 'Public keys (JWKS)', 'https://read.panelwave.org/.well-known/panelwave-keys.json')
+  .option('--allow-unsigned', 'Accept a package without signature (check the files only)', false)
+  .option('--strict', 'Fail on files the package does not list', false)
+  .option('--json', 'Output the result as JSON', false)
+  .action(verifyPackageCommand);
 
 program.parse();
