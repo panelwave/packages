@@ -124,6 +124,93 @@ export interface Creator {
   role: string;
   name: string;
   url?: Uri;
+  /** Craft role code (writer, artist, penciler, inker, colorist, letterer, cover_artist, …); `role` stays the display text. Since 1.15. */
+  role_code?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Distribution metadata (format 1.15)
+// ---------------------------------------------------------------------------
+
+export type WorkFormat = 'comic' | 'manga' | 'manhwa' | 'manhua' | 'webtoon' | 'graphic_novel' | 'comic_strip' | 'bande_dessinee' | 'fumetti' | 'other';
+export type PublicationType = 'serialized' | 'one_shot' | 'anthology' | 'web_original' | 'print_original';
+export type ReleaseKind = 'issue' | 'chapter' | 'episode' | 'volume' | 'graphic_novel' | 'collected_edition' | 'one_shot' | 'special' | 'anthology' | 'other';
+export type RatingCode = 'E' | 'T' | 'M' | 'A';
+export type AiLevel = 'none' | 'assisted' | 'generated_edited' | 'generated';
+export type AiArea = 'script' | 'lineArt' | 'colouring' | 'lettering' | 'cover' | 'translation' | 'voices' | 'music' | 'animation';
+export type WorkFeature = 'branching' | 'variables' | 'hotspots' | 'audio' | 'voice' | 'video' | 'animation' | 'widgets';
+export type LicenseCode = 'all_rights_reserved' | 'cc_by' | 'cc_by_sa' | 'cc_by_nd' | 'cc_by_nc' | 'cc_by_nc_sa' | 'cc_by_nc_nd' | 'cc0' | 'public_domain' | 'custom';
+
+export interface GenreRef {
+  /** Genre code of the PanelWave vocabulary (roadbeat comic genre codes). */
+  code: string;
+  primary?: boolean;
+}
+
+export interface WorkRating {
+  code: RatingCode;
+  min_age?: number;
+  regional?: { region: string; system: string; rating: string }[];
+  /** Warning codes of the PanelWave vocabulary. */
+  warnings?: string[];
+}
+
+export interface SeriesInfo {
+  id: string;
+  title: LocalizedString;
+  number?: number;
+  display?: string;
+  volume?: string;
+  url?: Uri;
+}
+
+export interface WorkIdentifier {
+  system: 'isbn13' | 'isbn10' | 'issn' | 'asin' | 'doi' | 'gtin' | 'other';
+  value: string;
+  edition?: string;
+}
+
+/** Per craft area: who made the first version. `declared: false` = not answered yet. */
+export interface AiDisclosure {
+  declared: boolean;
+  areas?: Partial<Record<AiArea, AiLevel>>;
+  tools?: string;
+  /** Optional public line readers see. */
+  statement?: LocalizedString;
+  declared_at?: Timestamp;
+}
+
+/** Computed when a release is frozen; never typed by the author. */
+export interface WorkFacts {
+  chapter_count?: number;
+  panel_count?: number;
+  page_count?: number;
+  reading_minutes?: number;
+  features?: WorkFeature[];
+  content_hash?: string;
+}
+
+/** The author's distribution terms. */
+export interface DistributionTerms {
+  listing?: 'listed_channels' | 'open';
+  embedding?: 'anywhere' | 'listed_channels';
+  purchase?: { checkout?: string; min_price?: number; max_channel_fee_bps?: number };
+  preview?: 'as_paywall';
+  attribution?: string;
+  contact?: string;
+}
+
+/** Top-level `distribution` (since 1.15): where the work lives and how channels may present it. */
+export interface Distribution {
+  canonical?: Uri;
+  listing?: { id: string; channel: string };
+  terms?: DistributionTerms;
+  checkout?: { provider?: string; url?: Uri };
+  unlock?: { url?: Uri };
+  editions?: { locale: LocaleCode; url: Uri }[];
+  integrity?: { algorithm?: 'sha256'; manifest?: string; signature?: string; keyId?: string };
+  /** Channel- and gateway-specific data (x-*) */
+  [key: `x-${string}`]: unknown;
 }
 
 export interface ContentWarning {
@@ -246,6 +333,30 @@ export interface Meta {
   content_warnings?: ContentWarning[];
   copyright?: string;
   license?: string;
+  // --- Distribution metadata (since 1.15, all optional) ---
+  subtitle?: LocalizedString;
+  /** Short synopsis; `description` stays the long text. */
+  synopsis?: LocalizedString;
+  format?: WorkFormat;
+  publication_type?: PublicationType;
+  release_kind?: ReleaseKind;
+  /** At most 5, at most one primary. */
+  genres?: GenreRef[];
+  /** At most 7 per locale. */
+  keywords?: Record<LocaleCode, string[]>;
+  /** `age_rating` stays and should carry the same code. */
+  rating?: WorkRating;
+  /** `series` (string) stays. */
+  series_info?: SeriesInfo;
+  identifiers?: WorkIdentifier[];
+  /** `publisher` (string) stays. */
+  publisher_info?: { name?: string; imprint?: string; url?: Uri; country?: string };
+  /** `license` (string) stays. */
+  license_info?: { code: LicenseCode; url?: Uri };
+  original_language?: LocaleCode;
+  translation?: { is_translation?: boolean; translators?: string[] };
+  ai_disclosure?: AiDisclosure;
+  facts?: WorkFacts;
 }
 
 // ---------------------------------------------------------------------------
@@ -1700,6 +1811,8 @@ export interface PanelwaveManifest {
   paywall?: Paywall;
   tracking?: Tracking;
   ui?: UISettings;
+  /** Since schema 1.15: canonical address, the author's terms, checkout, editions. */
+  distribution?: Distribution;
   /** Since schema 1.5: translation workflow state (authoring metadata). */
   localization?: Localization;
   /** Extension properties (x-*) */
