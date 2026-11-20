@@ -63,12 +63,30 @@ panelwave upgrade ./my-comic/panelwave.json --dry-run     # preview changes
 panelwave upgrade ./my-comic/panelwave.json -o upgraded.json
 ```
 
+### `panelwave verify-package <folder|url>`
+
+Check a PanelWave **channel package** before serving it: the PanelWave signature of its
+`package-manifest.json` (Ed25519, public keys at
+`https://read.panelwave.org/.well-known/panelwave-keys.json`) and the size and SHA-256 of every
+file it lists.
+
+```bash
+panelwave verify-package ./my-comic/                      # a folder
+panelwave verify-package https://pod.example/my-comic/    # where it is served
+panelwave verify-package ./my-comic/ --keys keys.json     # your own copy of the keys
+panelwave verify-package ./my-comic/ --strict --json      # files the list does not name fail too
+```
+
+Changed and missing files fail the check; files the list does not name are reported (and fail
+with `--strict`). An unsigned package fails unless you pass `--allow-unsigned`.
+
 ## Exit Codes
 
 | Code | Meaning                           |
 |------|-----------------------------------|
 | `0`  | Success / valid / identical       |
 | `1`  | Errors found / differences exist  |
+| `2`  | `verify-package` could not run (keys or package unreachable) |
 
 ## Links
 

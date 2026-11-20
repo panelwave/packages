@@ -1,7 +1,7 @@
 {
   "name": "@panelwave/cli",
   "version": "1.10.0",
-  "description": "Validate, bundle, diff, and upgrade PanelWave manifests from the command line",
+  "description": "Validate, bundle, diff, and upgrade PanelWave manifests from the command line; verify channel packages",
   "main": "dist/index.js",
   "bin": {
     "panelwave": "dist/index.js"
@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "npm run build && node --test test/"
   },
   "keywords": [
     "panelwave",
